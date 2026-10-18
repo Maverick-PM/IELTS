@@ -1,0 +1,13 @@
+{
+  "name": "ielts-offline-prep",
+  "version": "1.0.0",
+  "description": "100% Offline IELTS Academic Practice & Review PWA",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/**/*.test.mjs",
+    "start": "node server.mjs"
+  },
+  "keywords": ["ielts", "offline", "pwa", "academic-writing", "band9"],
+  "author": "",
+  "license": "MIT"
+}
