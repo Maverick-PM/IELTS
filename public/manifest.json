@@ -1,0 +1,22 @@
+{
+  "name": "IELTS Academic Offline Practice",
+  "short_name": "IELTS Offline",
+  "description": "100% Offline IELTS Academic Task 1 and Task 2 Practice & Band Review Engine",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
