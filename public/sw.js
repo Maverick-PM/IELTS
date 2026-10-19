@@ -1,5 +1,5 @@
 // IELTS Academic Offline - Service Worker
-const CACHE_NAME = 'ielts-offline-v2';
+const CACHE_NAME = 'ielts-offline-v3';
 
 const STATIC_ASSETS = [
   './',
