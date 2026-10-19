@@ -21,6 +21,13 @@ describe('Prompt Bank & Dictionaries', () => {
     assert.ok(categories.has('opinion'), 'Must have opinion essays');
     assert.ok(categories.has('discussion'), 'Must have discussion essays');
     assert.ok(categories.has('problem-solution'), 'Must have problem-solution essays');
+
+    // Official Cambridge instructions check
+    for (const p of TASK_2_PROMPTS) {
+      assert.ok(p.instructions, `Task 2 prompt ${p.id} must have instructions`);
+      assert.match(p.instructions, /examples/i, `Task 2 prompt ${p.id} instructions must mention examples`);
+      assert.match(p.instructions, /250\s*words/i, `Task 2 prompt ${p.id} instructions must state 250 words`);
+    }
   });
 
   it('contains comprehensive Academic Word List stems and categorized cohesive devices', () => {

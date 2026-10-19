@@ -43,6 +43,7 @@ class IELTSApp {
       conclusion: ''
     };
 
+    this.initTheme();
     this.initElements();
     this.initEvents();
     this.loadPrompts();
@@ -50,7 +51,10 @@ class IELTSApp {
   }
 
   initElements() {
-    // Header controls
+    // Header controls & Theme
+    this.themeToggleBtn = document.getElementById('theme-toggle-btn');
+    this.themeIconSun = document.getElementById('theme-icon-sun');
+    this.themeIconMoon = document.getElementById('theme-icon-moon');
     this.btnTask1 = document.getElementById('btn-task1');
     this.btnTask2 = document.getElementById('btn-task2');
     this.btnSimulator = document.getElementById('btn-simulator');
@@ -70,6 +74,8 @@ class IELTSApp {
     this.promptCategoryBadge = document.getElementById('prompt-category-badge');
     this.promptTitle = document.getElementById('prompt-title');
     this.promptText = document.getElementById('prompt-text');
+    this.promptInstructionsBox = document.getElementById('prompt-instructions-box');
+    this.promptInstructionsText = document.getElementById('prompt-instructions-text');
     this.task1ChartContainer = document.getElementById('task1-chart-container');
 
     // Editors
@@ -111,6 +117,11 @@ class IELTSApp {
   }
 
   initEvents() {
+    // Theme Switcher
+    if (this.themeToggleBtn) {
+      this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+    }
+
     // Task Type Switcher
     this.btnTask1.addEventListener('click', () => this.setTaskType('task1'));
     this.btnTask2.addEventListener('click', () => this.setTaskType('task2'));
@@ -158,6 +169,33 @@ class IELTSApp {
     this.modalDoneBtn.addEventListener('click', () => this.closeScoreModal());
     this.btnHistoryToggle.addEventListener('click', () => this.openHistoryModal());
     this.historyCloseBtn.addEventListener('click', () => this.closeHistoryModal());
+  }
+
+  initTheme() {
+    const savedTheme = localStorage.getItem('ielts_theme') || 'light';
+    this.setTheme(savedTheme);
+  }
+
+  setTheme(theme) {
+    this.currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('ielts_theme', theme);
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (theme === 'dark') {
+      if (this.themeIconSun) this.themeIconSun.style.display = 'block';
+      if (this.themeIconMoon) this.themeIconMoon.style.display = 'none';
+      if (metaThemeColor) metaThemeColor.setAttribute('content', '#090d16');
+    } else {
+      if (this.themeIconSun) this.themeIconSun.style.display = 'none';
+      if (this.themeIconMoon) this.themeIconMoon.style.display = 'block';
+      if (metaThemeColor) metaThemeColor.setAttribute('content', '#f8fafc');
+    }
+  }
+
+  toggleTheme() {
+    const nextTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+    this.setTheme(nextTheme);
   }
 
   setTaskType(type) {
@@ -234,7 +272,27 @@ class IELTSApp {
   async selectPrompt(prompt) {
     this.currentPrompt = prompt;
     this.promptTitle.textContent = prompt.title;
-    this.promptText.textContent = prompt.promptText || prompt.question;
+
+    // Clean question text and instructions
+    let questionText = prompt.promptText || prompt.question || '';
+    let instructions = prompt.instructions;
+
+    if (this.currentTask === 'task1') {
+      const parts = questionText.split(/\n\nSummarise/i);
+      if (parts.length > 1) {
+        questionText = parts[0];
+      }
+      instructions = 'Summarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.';
+    } else {
+      instructions = 'Give reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words.';
+    }
+
+    this.promptText.textContent = questionText;
+    if (this.promptInstructionsText) {
+      this.promptInstructionsText.innerHTML = instructions
+        .replace(/\n\n/g, '<br>')
+        .replace(/(Write at least \d+ words\.?)/i, '<strong>$1</strong>');
+    }
     
     const cat = prompt.category ? prompt.category.toUpperCase() : (prompt.chartType ? `${prompt.chartType.toUpperCase()} REPORT` : 'ACADEMIC');
     this.promptCategoryBadge.textContent = cat;
