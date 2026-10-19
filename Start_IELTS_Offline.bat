@@ -6,5 +6,5 @@ echo   Starting 100%% Offline IELTS Academic Practice App
 echo ========================================================
 echo.
 start "" http://localhost:8080
-node server.mjs
+python server.py
 pause
