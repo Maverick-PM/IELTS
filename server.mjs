@@ -23,16 +23,17 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
-function getLocalIp() {
+function getLocalIps() {
   const interfaces = os.networkInterfaces();
+  const ips = [];
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        return iface.address;
+      if (iface.family === 'IPv4' && !iface.internal && !iface.address.startsWith('169.254')) {
+        ips.push({ name, address: iface.address });
       }
     }
   }
-  return 'localhost';
+  return ips;
 }
 
 const server = http.createServer((req, res) => {
@@ -71,10 +72,16 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  const localIp = getLocalIp();
+  const ips = getLocalIps();
   console.log(`\n======================================================`);
-  console.log(`🚀 IELTS Offline Practice App Server Active!`);
-  console.log(`   Local URL:    http://localhost:${PORT}`);
-  console.log(`   On Your Phone (Infinix Hot 70): http://${localIp}:${PORT}`);
+  console.log(`🚀 IELTS Complete Offline Practice Suite Active!`);
+  console.log(`   On Your Computer:  http://localhost:${PORT}`);
+  if (ips.length === 0) {
+    console.log(`   On Your Phone: Connect phone to PC Wi-Fi/Hotspot, then visit port ${PORT}`);
+  } else {
+    ips.forEach(i => {
+      console.log(`   On Your Phone (${i.name}): http://${i.address}:${PORT}`);
+    });
+  }
   console.log(`======================================================\n`);
 });
