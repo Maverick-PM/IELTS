@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#090d16">
+  <meta name="theme-color" content="#f8fafc">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>IELTS Academic Offline</title>
+  <title>IELTS Academic Complete Offline Prep</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/app.css">
 </head>
@@ -16,10 +16,10 @@
     <header class="header">
       <div class="header-top">
         <div class="brand-badge">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
-          <span style="font-weight: 700; font-size: 1rem; letter-spacing: -0.02em;">IELTS Academic</span>
+          <span style="font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em;">IELTS Academic Master</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <button id="theme-toggle-btn" class="icon-btn" title="Toggle Light / Dark Mode" aria-label="Toggle Light / Dark Mode">
@@ -37,145 +37,483 @@
         </div>
       </div>
 
-      <!-- Task Type Toggle -->
-      <div class="segmented-control" id="task-segmented">
-        <button class="segmented-btn" data-task="task1" id="btn-task1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          Task 1 (150w · 20m)
+      <!-- Main Module Navigation Tabs -->
+      <nav class="module-nav" id="module-nav">
+        <button class="module-nav-btn active" data-module="writing" id="nav-btn-writing">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+          Writing
         </button>
-        <button class="segmented-btn active" data-task="task2" id="btn-task2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          Task 2 (250w · 40m)
+        <button class="module-nav-btn" data-module="reading" id="nav-btn-reading">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Reading
         </button>
-      </div>
+        <button class="module-nav-btn" data-module="listening" id="nav-btn-listening">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          Listening
+        </button>
+        <button class="module-nav-btn" data-module="speaking" id="nav-btn-speaking">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          Speaking
+        </button>
+      </nav>
 
-      <!-- Mode Switcher -->
-      <div class="segmented-control" id="mode-segmented">
-        <button class="segmented-btn active" data-mode="simulator" id="btn-simulator">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Exam Simulator
-        </button>
-        <button class="segmented-btn" data-mode="coach" id="btn-coach">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Guided Coach
-        </button>
+      <!-- Writing Sub-Controls -->
+      <div id="writing-sub-controls" style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="segmented-control" id="task-segmented">
+          <button class="segmented-btn" data-task="task1" id="btn-task1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Task 1 (150w · 20m)
+          </button>
+          <button class="segmented-btn active" data-task="task2" id="btn-task2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Task 2 (250w · 40m)
+          </button>
+        </div>
+
+        <div class="segmented-control" id="mode-segmented">
+          <button class="segmented-btn active" data-mode="simulator" id="btn-simulator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Exam Simulator
+          </button>
+          <button class="segmented-btn" data-mode="coach" id="btn-coach">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Guided Coach
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Metrics Bar: Timer & Live Word Count -->
-    <div class="metrics-bar">
-      <!-- Timer Box -->
-      <div class="metric-card">
-        <div class="timer-box">
-          <button class="icon-btn" id="timer-toggle-btn" title="Start/Pause Timer">
-            <svg id="timer-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <!-- ======================================================== -->
+    <!-- 1. WRITING MODULE VIEW                                   -->
+    <!-- ======================================================== -->
+    <main id="module-view-writing" style="display: flex; flex-direction: column; gap: 14px;">
+      <!-- Metrics Bar: Timer & Live Word Count -->
+      <div class="metrics-bar">
+        <div class="metric-card">
+          <div class="timer-box">
+            <button class="icon-btn" id="timer-toggle-btn" title="Start/Pause Timer">
+              <svg id="timer-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <span class="timer-digits" id="timer-display">40:00</span>
+          </div>
+          <button class="icon-btn" id="timer-reset-btn" title="Reset Timer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
-          <span class="timer-digits" id="timer-display">40:00</span>
         </div>
-        <button class="icon-btn" id="timer-reset-btn" title="Reset Timer">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        </button>
-      </div>
 
-      <!-- Word Counter Box -->
-      <div class="metric-card">
-        <div>
-          <div class="text-xs text-muted">Word Count</div>
-          <div style="font-weight: 700; font-size: 1.15rem; font-family: var(--font-mono);">
-            <span id="word-count-num">0</span> <span class="text-xs text-muted" id="word-target-label">/ 250</span>
+        <div class="metric-card">
+          <div>
+            <div class="text-xs text-muted">Word Count</div>
+            <div style="font-weight: 700; font-size: 1.15rem; font-family: var(--font-mono);">
+              <span id="word-count-num">0</span> <span class="text-xs text-muted" id="word-target-label">/ 250</span>
+            </div>
+          </div>
+          <div id="word-status-badge" class="tag-badge" style="background: rgba(244, 63, 94, 0.1); color: var(--destructive); border-color: rgba(244, 63, 94, 0.2);">
+            Under Minimum
           </div>
         </div>
-        <div id="word-status-badge" class="tag-badge" style="background: rgba(244, 63, 94, 0.1); color: var(--destructive); border-color: rgba(244, 63, 94, 0.2);">
-          Under Minimum
+      </div>
+
+      <!-- Prompt Selection & Display -->
+      <section class="prompt-card">
+        <div class="prompt-header">
+          <div>
+            <span class="tag-badge" id="prompt-category-badge">OPINION ESSAY</span>
+            <h2 class="text-base" id="prompt-title" style="margin-top: 4px;">Automation & Workplace Employment</h2>
+          </div>
+          <select id="prompt-select" style="background: var(--background); border: 1px solid var(--border); color: var(--foreground); font-size: 0.8rem; padding: 6px 10px; border-radius: 6px; max-width: 140px; outline: none;">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <!-- Chart container for Task 1 -->
+        <div id="task1-chart-container" class="chart-wrapper" style="display: none;">
+          <!-- Inline SVG Chart -->
+        </div>
+
+        <!-- Prompt text -->
+        <div class="text-sm" id="prompt-text" style="color: var(--foreground); font-weight: 500; white-space: pre-line; line-height: 1.6;">
+          Some people argue that artificial intelligence and automation will lead to widespread unemployment, while others believe they will generate more opportunities than they eliminate.
+          
+          To what extent do you agree or disagree?
+        </div>
+
+        <!-- Official Exam Instructions Callout -->
+        <div class="prompt-instructions-box" id="prompt-instructions-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div id="prompt-instructions-text" style="flex: 1;">
+            Give reasons for your answer and include any relevant examples from your own knowledge or experience.
+            <br><strong>Write at least 250 words.</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- Editor Surface: Simulator vs Guided Coach -->
+      <section class="editor-card">
+        <div id="simulator-container">
+          <textarea id="essay-input" class="essay-textarea" placeholder="Type or paste your essay response here... (Autosaves offline continuously)"></textarea>
+        </div>
+
+        <div id="coach-container" style="display: none; flex-direction: column; gap: 12px;">
+          <div class="coach-tabs" id="coach-tabs">
+            <div class="coach-tab-btn active" data-section="intro">1. Intro</div>
+            <div class="coach-tab-btn" data-section="body1">2. Body 1</div>
+            <div class="coach-tab-btn" data-section="body2">3. Body 2</div>
+            <div class="coach-tab-btn" data-section="conclusion">4. Conclusion</div>
+          </div>
+
+          <textarea id="coach-section-input" class="essay-textarea" style="min-height: 180px;" placeholder="Draft this section here..."></textarea>
+
+          <div class="coach-drawer">
+            <div class="coach-stat-row">
+              <span class="text-muted">Academic Vocabulary (AWL):</span>
+              <span id="coach-awl-count" class="font-mono text-primary" style="font-weight: 600;">0 terms</span>
+            </div>
+            <div class="coach-stat-row">
+              <span class="text-muted">Cohesive Transition Words:</span>
+              <span id="coach-cohesive-count" class="font-mono text-success" style="font-weight: 600;">0 linkers</span>
+            </div>
+            <div class="text-xs text-muted" id="coach-tip-box" style="margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border-subtle);">
+              Tip: State your definitive position clearly in the final sentence of your introduction.
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button class="btn-primary" id="btn-submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Submit for Instant Band Review
+          </button>
+          <button class="btn-secondary" id="btn-history-toggle" style="width: auto;" title="View Past Essays">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            History
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- 2. READING MODULE VIEW                                   -->
+    <!-- ======================================================== -->
+    <main id="module-view-reading" style="display: none; flex-direction: column; gap: 14px;">
+      <!-- Reading Metrics Bar -->
+      <div class="metrics-bar">
+        <div class="metric-card">
+          <div class="timer-box">
+            <button class="icon-btn" id="reading-timer-toggle-btn" title="Start/Pause Timer">
+              <svg id="reading-timer-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <span class="timer-digits" id="reading-timer-display">60:00</span>
+          </div>
+          <button class="icon-btn" id="reading-timer-reset-btn" title="Reset Timer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+        </div>
+
+        <div class="metric-card">
+          <div>
+            <div class="text-xs text-muted">Questions Answered</div>
+            <div style="font-weight: 700; font-size: 1.15rem; font-family: var(--font-mono);">
+              <span id="reading-answered-count">0</span> <span class="text-xs text-muted">/ 40</span>
+            </div>
+          </div>
+          <span class="tag-badge" id="reading-progress-pill">In Progress</span>
         </div>
       </div>
-    </div>
 
-    <!-- Prompt Selection & Display -->
-    <section class="prompt-card">
-      <div class="prompt-header">
-        <div>
-          <span class="tag-badge" id="prompt-category-badge">OPINION ESSAY</span>
-          <h2 class="text-base" id="prompt-title" style="margin-top: 4px;">Automation & Workplace Employment</h2>
+      <!-- Passage Switcher -->
+      <div class="segmented-control" id="reading-passage-tabs">
+        <button class="segmented-btn active" data-passage="0">Passage 1 (Q1–13)</button>
+        <button class="segmented-btn" data-passage="1">Passage 2 (Q14–26)</button>
+        <button class="segmented-btn" data-passage="2">Passage 3 (Q27–40)</button>
+      </div>
+
+      <!-- Reading Layout -->
+      <div class="reading-layout">
+        <!-- Passage Box -->
+        <section class="prompt-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="text-sm" id="reading-passage-title" style="font-weight: 600;">Passage 1: Echolocation</h3>
+            <span class="tag-badge">Official Academic Text</span>
+          </div>
+          <div class="passage-box" id="reading-passage-content">
+            <!-- Dynamic passage text -->
+          </div>
+        </section>
+
+        <!-- Questions Card -->
+        <section class="editor-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <h3 class="text-sm font-semibold">Passage Questions</h3>
+            <span class="text-xs text-muted">Answer all items</span>
+          </div>
+          <div id="reading-questions-list">
+            <!-- Dynamically populated questions -->
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn-primary" id="btn-submit-reading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Submit Reading Test for Band Score
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- 3. LISTENING MODULE VIEW                                 -->
+    <!-- ======================================================== -->
+    <main id="module-view-listening" style="display: none; flex-direction: column; gap: 14px;">
+      <!-- Listening Metrics Bar -->
+      <div class="metrics-bar">
+        <div class="metric-card">
+          <div class="timer-box">
+            <span class="timer-digits" id="listening-timer-display">30:00</span>
+          </div>
+          <span class="tag-badge">Listening Exam</span>
         </div>
-        <select id="prompt-select" style="background: var(--background); border: 1px solid var(--border); color: var(--foreground); font-size: 0.8rem; padding: 6px 10px; border-radius: 6px; max-width: 140px; outline: none;">
+
+        <div class="metric-card">
+          <div>
+            <div class="text-xs text-muted">Completed</div>
+            <div style="font-weight: 700; font-size: 1.15rem; font-family: var(--font-mono);">
+              <span id="listening-answered-count">0</span> <span class="text-xs text-muted">/ 40</span>
+            </div>
+          </div>
+          <span class="tag-badge" id="listening-progress-pill">Ready</span>
+        </div>
+      </div>
+
+      <!-- Section Tabs -->
+      <div class="segmented-control" id="listening-section-tabs">
+        <button class="segmented-btn active" data-section="0">Sec 1 (Q1–10)</button>
+        <button class="segmented-btn" data-section="1">Sec 2 (Q11–20)</button>
+        <button class="segmented-btn" data-section="2">Sec 3 (Q21–30)</button>
+        <button class="segmented-btn" data-section="3">Sec 4 (Q31–40)</button>
+      </div>
+
+      <!-- Offline Audio Player Card -->
+      <section class="audio-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 class="text-sm font-semibold" id="listening-section-title">Section 1: Accommodation</h3>
+            <p class="text-xs text-muted" id="listening-section-scenario">Student accommodation dialogue</p>
+          </div>
+          <button class="icon-btn" id="listening-toggle-transcript-btn" title="Toggle Transcript">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </button>
+        </div>
+
+        <div class="audio-speaker-banner" id="listening-speaker-banner">
+          <span class="text-muted">Audio paused. Tap Play Audio below to listen to the dialogue.</span>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-primary" id="listening-audio-play-btn" style="flex: 2;">
+            <svg id="listening-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span id="listening-play-text">Play Offline Audio</span>
+          </button>
+          <button class="btn-secondary" id="listening-audio-stop-btn" style="flex: 1;">
+            Stop
+          </button>
+        </div>
+
+        <!-- Transcript Drawer (Hidden by default) -->
+        <div id="listening-transcript-box" class="feedback-box" style="display: none; max-height: 200px; overflow-y: auto;">
+          <!-- Dialogue script -->
+        </div>
+      </section>
+
+      <!-- Listening Questions Card -->
+      <section class="editor-card">
+        <h3 class="text-sm font-semibold" style="margin-bottom: 4px;">Listening Questions</h3>
+        <div id="listening-questions-list">
           <!-- Dynamically populated -->
-        </select>
-      </div>
-
-      <!-- Chart container for Task 1 -->
-      <div id="task1-chart-container" class="chart-wrapper" style="display: none;">
-        <!-- Inline SVG Chart -->
-      </div>
-
-      <!-- Prompt text -->
-      <div class="text-sm" id="prompt-text" style="color: var(--foreground); font-weight: 500; white-space: pre-line; line-height: 1.6;">
-        Some people argue that artificial intelligence and automation will lead to widespread unemployment, while others believe they will generate more opportunities than they eliminate.
-        
-        To what extent do you agree or disagree?
-      </div>
-
-      <!-- Official Exam Instructions Callout -->
-      <div class="prompt-instructions-box" id="prompt-instructions-box">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <div id="prompt-instructions-text" style="flex: 1;">
-          Give reasons for your answer and include any relevant examples from your own knowledge or experience.
-          <br><strong>Write at least 250 words.</strong>
-        </div>
-      </div>
-    </section>
-
-    <!-- Editor Surface: Simulator vs Guided Coach -->
-    <section class="editor-card">
-      <!-- Simulator Textarea -->
-      <div id="simulator-container">
-        <textarea id="essay-input" class="essay-textarea" placeholder="Type or paste your essay response here... (Autosaves offline continuously)"></textarea>
-      </div>
-
-      <!-- Guided Coach Container -->
-      <div id="coach-container" style="display: none; flex-direction: column; gap: 12px;">
-        <div class="coach-tabs" id="coach-tabs">
-          <div class="coach-tab-btn active" data-section="intro">1. Intro</div>
-          <div class="coach-tab-btn" data-section="body1">2. Body 1</div>
-          <div class="coach-tab-btn" data-section="body2">3. Body 2</div>
-          <div class="coach-tab-btn" data-section="conclusion">4. Conclusion</div>
         </div>
 
-        <textarea id="coach-section-input" class="essay-textarea" style="min-height: 180px;" placeholder="Draft this section here..."></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="btn-primary" id="btn-submit-listening">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Submit Listening Test for Band Score
+          </button>
+        </div>
+      </section>
+    </main>
 
-        <!-- Live Coach Intelligence Drawer -->
-        <div class="coach-drawer">
-          <div class="coach-stat-row">
-            <span class="text-muted">Academic Vocabulary (AWL):</span>
-            <span id="coach-awl-count" class="font-mono text-primary" style="font-weight: 600;">0 terms</span>
-          </div>
-          <div class="coach-stat-row">
-            <span class="text-muted">Cohesive Transition Words:</span>
-            <span id="coach-cohesive-count" class="font-mono text-success" style="font-weight: 600;">0 linkers</span>
-          </div>
-          <div class="text-xs text-muted" id="coach-tip-box" style="margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border-subtle);">
-            Tip: State your definitive position clearly in the final sentence of your introduction.
-          </div>
+    <!-- ======================================================== -->
+    <!-- 4. SPEAKING MODULE VIEW                                  -->
+    <!-- ======================================================== -->
+    <main id="module-view-speaking" style="display: none; flex-direction: column; gap: 14px;">
+      <!-- Speaking Parts Navigation -->
+      <div class="segmented-control" id="speaking-part-tabs">
+        <button class="segmented-btn active" data-sp-part="part1">Part 1 (Interview)</button>
+        <button class="segmented-btn" data-sp-part="part2">Part 2 (Cue Card)</button>
+        <button class="segmented-btn" data-sp-part="part3">Part 3 (Discussion)</button>
+        <button class="segmented-btn" data-sp-part="score">Self Rubric</button>
+      </div>
+
+      <!-- Speaking Part 1 View -->
+      <div id="speaking-container-part1" style="display: flex; flex-direction: column; gap: 12px;">
+        <section class="prompt-card">
+          <span class="tag-badge">Part 1: Introduction & Familiar Topics</span>
+          <h3 class="text-base font-semibold" style="margin-top: 4px;">Digital Habits & Daily Routine</h3>
+          <p class="text-xs text-muted">Answer naturally at length (2–3 sentences per question). Tap read aloud to hear examiner questions.</p>
+        </section>
+
+        <div id="speaking-part1-questions" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Dynamically populated -->
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div style="display: flex; gap: 10px; margin-top: 8px;">
-        <button class="btn-primary" id="btn-submit">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Submit for Instant Band Review
-        </button>
-        <button class="btn-secondary" id="btn-history-toggle" style="width: auto;" title="View Past Essays">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          History
-        </button>
+      <!-- Speaking Part 2 View (Cue Card) -->
+      <div id="speaking-container-part2" style="display: none; flex-direction: column; gap: 14px;">
+        <div class="cue-card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="tag-badge" style="background: var(--card);">Part 2 Candidate Task Card</span>
+            <span class="text-xs text-muted">1m prep · 2m speak</span>
+          </div>
+          <h3 class="text-base font-semibold" id="cue-card-topic">Describe an ambitious challenge you accomplished.</h3>
+          <p class="text-xs text-muted">You should say:</p>
+          <ul id="cue-card-bullets">
+            <li>What the challenge was</li>
+            <li>When and why you undertook it</li>
+            <li>What difficulties you encountered</li>
+            <li>And explain how you felt when you completed it</li>
+          </ul>
+        </div>
+
+        <!-- Prep & Speaking Timers -->
+        <div class="metrics-bar">
+          <div class="metric-card">
+            <div>
+              <div class="text-xs text-muted">1-Min Prep Timer</div>
+              <div class="timer-digits" id="sp-prep-timer-display">01:00</div>
+            </div>
+            <button class="btn-secondary" id="btn-sp-prep-timer" style="padding: 6px 10px;">Start Prep</button>
+          </div>
+
+          <div class="metric-card">
+            <div>
+              <div class="text-xs text-muted">2-Min Speak Timer</div>
+              <div class="timer-digits" id="sp-speak-timer-display">02:00</div>
+            </div>
+            <button class="btn-primary" id="btn-sp-speak-timer" style="width: auto; padding: 6px 12px;">Start Speak</button>
+          </div>
+        </div>
+
+        <!-- Candidate Notes Scratchpad -->
+        <section class="editor-card">
+          <label class="text-xs text-muted" style="font-weight: 600;">1-Minute Preparation Notes (Scratchpad):</label>
+          <textarea id="speaking-notes-input" class="scratchpad-area" placeholder="Jot down key keywords, signposts, and vocabulary for your talk..."></textarea>
+        </section>
+
+        <!-- Voice Recorder Bar -->
+        <section class="editor-card">
+          <h4 class="text-sm font-semibold">Offline Voice Recording</h4>
+          <div class="audio-recorder-bar">
+            <button class="btn-primary" id="btn-sp-record-toggle" style="width: auto;">
+              <span id="sp-record-label">Record My Speech</span>
+            </button>
+            <div id="sp-recording-status" class="text-xs text-muted" style="display: flex; align-items: center; gap: 6px;">
+              <span>Microphone Ready</span>
+            </div>
+          </div>
+          <div id="sp-audio-playback-container" style="display: none; margin-top: 10px;">
+            <audio id="sp-audio-playback" controls style="width: 100%; height: 38px;"></audio>
+          </div>
+        </section>
+
+        <!-- Band 9 Model Speech Accordion -->
+        <section class="editor-card">
+          <button class="btn-secondary" id="btn-toggle-part2-model" style="justify-content: space-between; width: 100%;">
+            <span>View Band 9 Model Response & Vocabulary</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="part2-model-box" class="model-answer-accordion" style="display: none;">
+            <p class="text-sm" id="part2-model-text" style="white-space: pre-line; line-height: 1.6;"></p>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);">
+              <span class="text-xs font-semibold text-primary">Band 9 Key Collocations:</span>
+              <div id="part2-keywords-pills" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;"></div>
+            </div>
+          </div>
+        </section>
       </div>
-    </section>
+
+      <!-- Speaking Part 3 View (Discussion) -->
+      <div id="speaking-container-part3" style="display: none; flex-direction: column; gap: 12px;">
+        <section class="prompt-card">
+          <span class="tag-badge">Part 3: Two-Way Analytical Discussion</span>
+          <h3 class="text-base font-semibold" style="margin-top: 4px;">Technological Automation & Future Society</h3>
+          <p class="text-xs text-muted">Deep, abstract questions expanding upon Part 2. Give extended analytical answers.</p>
+        </section>
+
+        <div id="speaking-part3-questions" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Speaking Self Assessment Rubric View -->
+      <div id="speaking-container-score" style="display: none; flex-direction: column; gap: 14px;">
+        <section class="editor-card">
+          <h3 class="text-base font-semibold">Official Speaking Band Self-Assessment</h3>
+          <p class="text-xs text-muted">Evaluate your recorded speech against the 4 official IELTS criteria.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 8px;">
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                <span>Fluency & Coherence</span>
+                <span id="score-val-fc" class="font-mono text-primary">7.5</span>
+              </div>
+              <input type="range" id="slider-fc" min="4.0" max="9.0" step="0.5" value="7.5" style="width: 100%; margin-top: 4px;">
+              <p class="text-xs text-muted">Speaks at length with minimal hesitation, natural linking, and clear ideas.</p>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                <span>Lexical Resource</span>
+                <span id="score-val-lr" class="font-mono text-primary">7.5</span>
+              </div>
+              <input type="range" id="slider-lr" min="4.0" max="9.0" step="0.5" value="7.5" style="width: 100%; margin-top: 4px;">
+              <p class="text-xs text-muted">Uses a broad vocabulary readily and flexibly with idiomatic collocations.</p>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                <span>Grammatical Range & Accuracy</span>
+                <span id="score-val-gra" class="font-mono text-primary">7.0</span>
+              </div>
+              <input type="range" id="slider-gra" min="4.0" max="9.0" step="0.5" value="7.0" style="width: 100%; margin-top: 4px;">
+              <p class="text-xs text-muted">Frequent error-free sentences with complex clauses and conditionals.</p>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                <span>Pronunciation</span>
+                <span id="score-val-pr" class="font-mono text-primary">7.5</span>
+              </div>
+              <input type="range" id="slider-pr" min="4.0" max="9.0" step="0.5" value="7.5" style="width: 100%; margin-top: 4px;">
+              <p class="text-xs text-muted">Effortless to understand with natural intonation, rhythm, and clear stress.</p>
+            </div>
+          </div>
+
+          <div class="band-hero" style="margin-top: 14px;">
+            <div class="text-xs text-muted">Calculated Overall Speaking Band</div>
+            <div class="band-score-num" id="sp-calculated-band">7.5</div>
+          </div>
+
+          <button class="btn-primary" id="btn-save-speaking-session" style="margin-top: 10px;">
+            Save Speaking Assessment to History
+          </button>
+        </section>
+      </div>
+    </main>
+
   </div>
 
-  <!-- Diagnostic Score Review Modal -->
+  <!-- Diagnostic Score Review Modal (Writing) -->
   <div class="modal-overlay" id="score-modal" style="display: none;">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -185,14 +523,12 @@
         </button>
       </div>
 
-      <!-- Hero Band Score -->
       <div class="band-hero">
         <div class="text-xs text-muted" style="text-transform: uppercase; letter-spacing: 0.05em;">Estimated Overall Band</div>
         <div class="band-score-num" id="modal-overall-band">7.5</div>
         <div class="tag-badge" id="modal-band-descriptor" style="background: var(--card); color: var(--foreground); margin-top: 4px;">Good User</div>
       </div>
 
-      <!-- 4 Criteria Subscores -->
       <div class="subscores-grid">
         <div class="subscore-card">
           <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
@@ -227,7 +563,6 @@
         </div>
       </div>
 
-      <!-- Strengths -->
       <div>
         <h4 class="text-sm text-success" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -236,7 +571,6 @@
         <div class="feedback-box" id="modal-strengths-list"></div>
       </div>
 
-      <!-- Critical Areas to Improve -->
       <div>
         <h4 class="text-sm text-warning" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -245,7 +579,6 @@
         <div class="feedback-box" id="modal-areas-list"></div>
       </div>
 
-      <!-- Recommended Vocabulary Upgrades -->
       <div id="modal-upgrades-section">
         <h4 class="text-sm text-primary" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -258,11 +591,38 @@
     </div>
   </div>
 
+  <!-- Objective Score Modal (Reading & Listening) -->
+  <div class="modal-overlay" id="objective-score-modal" style="display: none;">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="tag-badge" id="objective-modal-badge">IELTS Academic Test Result</span>
+        <button class="icon-btn" id="objective-modal-close-btn" style="border: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="band-hero">
+        <div class="text-xs text-muted" id="objective-modal-type-label">Official Band Score</div>
+        <div class="band-score-num" id="objective-modal-band">8.5</div>
+        <div class="text-sm font-semibold" id="objective-modal-raw" style="color: var(--foreground); margin-top: 4px;">Raw Score: 37 / 40 (92%)</div>
+      </div>
+
+      <div>
+        <h4 class="text-sm font-semibold" style="margin-bottom: 8px;">Question Breakdown & Answer Key</h4>
+        <div id="objective-modal-results-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <button class="btn-primary" id="objective-modal-done-btn">Close Review</button>
+    </div>
+  </div>
+
   <!-- History Drawer Modal -->
   <div class="modal-overlay" id="history-modal" style="display: none;">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 class="text-base">Practice History & Scores</h3>
+        <h3 class="text-base font-semibold">IELTS Practice History</h3>
         <button class="icon-btn" id="history-close-btn" style="border: none;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>

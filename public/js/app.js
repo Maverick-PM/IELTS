@@ -6,6 +6,15 @@ import { evaluateEssay } from './engine/scoringEngine.js';
 import { tokenize } from './engine/tokenizer.js';
 import { storageService } from './services/storageService.js';
 
+import { ACADEMIC_READING_TESTS } from './data/readingTests.js';
+import { evaluateReadingTest } from './engine/readingEngine.js';
+
+import { ACADEMIC_LISTENING_TESTS } from './data/listeningTests.js';
+import { OfflineAudioPlayer, evaluateListeningTest } from './engine/listeningEngine.js';
+
+import { SPEAKING_TOPICS } from './data/speakingTests.js';
+import { OfflineVoiceRecorder, calculateSpeakingBand } from './engine/speakingEngine.js';
+
 // Band descriptor labels per official IELTS scale
 const BAND_DESCRIPTORS = {
   9: 'Expert User',
@@ -25,152 +34,55 @@ const BAND_DESCRIPTORS = {
 
 class IELTSApp {
   constructor() {
-    this.currentTask = 'task2'; // 'task1' | 'task2'
-    this.currentMode = 'simulator'; // 'simulator' | 'coach'
-    this.currentPrompt = null;
+    this.currentModule = 'writing'; // 'writing' | 'reading' | 'listening' | 'speaking'
     
-    // Timer state
+    // Writing State
+    this.currentTask = 'task2';
+    this.currentMode = 'simulator';
+    this.currentPrompt = null;
     this.timerSeconds = 40 * 60;
     this.timerRunning = false;
     this.timerInterval = null;
-
-    // Guided coach sections state
     this.coachSection = 'intro';
-    this.coachSections = {
-      intro: '',
-      body1: '',
-      body2: '',
-      conclusion: ''
-    };
+    this.coachSections = { intro: '', body1: '', body2: '', conclusion: '' };
+
+    // Reading State
+    this.currentReadingTest = ACADEMIC_READING_TESTS[0];
+    this.currentReadingPassageIndex = 0;
+    this.readingAnswers = {};
+    this.readingTimerSeconds = 60 * 60;
+    this.readingTimerRunning = false;
+    this.readingTimerInterval = null;
+
+    // Listening State
+    this.currentListeningTest = ACADEMIC_LISTENING_TESTS[0];
+    this.currentListeningSectionIndex = 0;
+    this.listeningAnswers = {};
+    this.listeningPlayer = null;
+
+    // Speaking State
+    this.speakingTopic = SPEAKING_TOPICS[0];
+    this.speakingRecorder = new OfflineVoiceRecorder();
+    this.speakingPrepTimerSeconds = 60;
+    this.speakingPrepRunning = false;
+    this.speakingPrepInterval = null;
+    this.speakingSpeakTimerSeconds = 120;
+    this.speakingSpeakRunning = false;
+    this.speakingSpeakInterval = null;
 
     this.initTheme();
     this.initElements();
     this.initEvents();
     this.loadPrompts();
+    this.initReadingModule();
+    this.initListeningModule();
+    this.initSpeakingModule();
     this.initServiceWorker();
   }
 
-  initElements() {
-    // Header controls & Theme
-    this.themeToggleBtn = document.getElementById('theme-toggle-btn');
-    this.themeIconSun = document.getElementById('theme-icon-sun');
-    this.themeIconMoon = document.getElementById('theme-icon-moon');
-    this.btnTask1 = document.getElementById('btn-task1');
-    this.btnTask2 = document.getElementById('btn-task2');
-    this.btnSimulator = document.getElementById('btn-simulator');
-    this.btnCoach = document.getElementById('btn-coach');
-
-    // Timer & Metrics
-    this.timerDisplay = document.getElementById('timer-display');
-    this.timerToggleBtn = document.getElementById('timer-toggle-btn');
-    this.timerPlayIcon = document.getElementById('timer-play-icon');
-    this.timerResetBtn = document.getElementById('timer-reset-btn');
-    this.wordCountNum = document.getElementById('word-count-num');
-    this.wordTargetLabel = document.getElementById('word-target-label');
-    this.wordStatusBadge = document.getElementById('word-status-badge');
-
-    // Prompt elements
-    this.promptSelect = document.getElementById('prompt-select');
-    this.promptCategoryBadge = document.getElementById('prompt-category-badge');
-    this.promptTitle = document.getElementById('prompt-title');
-    this.promptText = document.getElementById('prompt-text');
-    this.promptInstructionsBox = document.getElementById('prompt-instructions-box');
-    this.promptInstructionsText = document.getElementById('prompt-instructions-text');
-    this.task1ChartContainer = document.getElementById('task1-chart-container');
-
-    // Editors
-    this.simulatorContainer = document.getElementById('simulator-container');
-    this.coachContainer = document.getElementById('coach-container');
-    this.essayInput = document.getElementById('essay-input');
-    this.coachSectionInput = document.getElementById('coach-section-input');
-    this.coachTabs = document.getElementById('coach-tabs');
-    this.coachAwlCount = document.getElementById('coach-awl-count');
-    this.coachCohesiveCount = document.getElementById('coach-cohesive-count');
-    this.coachTipBox = document.getElementById('coach-tip-box');
-
-    // Action buttons
-    this.btnSubmit = document.getElementById('btn-submit');
-    this.btnHistoryToggle = document.getElementById('btn-history-toggle');
-
-    // Modals
-    this.scoreModal = document.getElementById('score-modal');
-    this.modalCloseBtn = document.getElementById('modal-close-btn');
-    this.modalDoneBtn = document.getElementById('modal-done-btn');
-    this.historyModal = document.getElementById('history-modal');
-    this.historyCloseBtn = document.getElementById('history-close-btn');
-    this.historyList = document.getElementById('history-list');
-
-    // Modal score elements
-    this.modalOverallBand = document.getElementById('modal-overall-band');
-    this.modalBandDescriptor = document.getElementById('modal-band-descriptor');
-    this.subscoreTrVal = document.getElementById('subscore-tr-val');
-    this.subscoreTrBar = document.getElementById('subscore-tr-bar');
-    this.subscoreCcVal = document.getElementById('subscore-cc-val');
-    this.subscoreCcBar = document.getElementById('subscore-cc-bar');
-    this.subscoreLrVal = document.getElementById('subscore-lr-val');
-    this.subscoreLrBar = document.getElementById('subscore-lr-bar');
-    this.subscoreGraVal = document.getElementById('subscore-gra-val');
-    this.subscoreGraBar = document.getElementById('subscore-gra-bar');
-    this.modalStrengthsList = document.getElementById('modal-strengths-list');
-    this.modalAreasList = document.getElementById('modal-areas-list');
-    this.modalUpgradesList = document.getElementById('modal-upgrades-list');
-  }
-
-  initEvents() {
-    // Theme Switcher
-    if (this.themeToggleBtn) {
-      this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
-    }
-
-    // Task Type Switcher
-    this.btnTask1.addEventListener('click', () => this.setTaskType('task1'));
-    this.btnTask2.addEventListener('click', () => this.setTaskType('task2'));
-
-    // Mode Switcher
-    this.btnSimulator.addEventListener('click', () => this.setMode('simulator'));
-    this.btnCoach.addEventListener('click', () => this.setMode('coach'));
-
-    // Timer Controls
-    this.timerToggleBtn.addEventListener('click', () => this.toggleTimer());
-    this.timerResetBtn.addEventListener('click', () => this.resetTimer());
-
-    // Prompt Selection
-    this.promptSelect.addEventListener('change', (e) => this.selectPromptById(e.target.value));
-
-    // Simulator input listener (word count + autosave)
-    this.essayInput.addEventListener('input', () => {
-      this.updateWordCount(this.essayInput.value);
-      this.debounceAutosave(this.essayInput.value);
-    });
-
-    // Coach input listener
-    this.coachSectionInput.addEventListener('input', () => {
-      this.coachSections[this.coachSection] = this.coachSectionInput.value;
-      const fullText = this.getAssembledCoachText();
-      this.updateWordCount(fullText);
-      this.updateCoachLiveStats(this.coachSectionInput.value);
-      this.debounceAutosave(fullText);
-    });
-
-    // Coach tab switcher
-    this.coachTabs.querySelectorAll('.coach-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.coachTabs.querySelectorAll('.coach-tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.switchCoachSection(btn.dataset.section);
-      });
-    });
-
-    // Submit for review
-    this.btnSubmit.addEventListener('click', () => this.submitEssay());
-
-    // Modals
-    this.modalCloseBtn.addEventListener('click', () => this.closeScoreModal());
-    this.modalDoneBtn.addEventListener('click', () => this.closeScoreModal());
-    this.btnHistoryToggle.addEventListener('click', () => this.openHistoryModal());
-    this.historyCloseBtn.addEventListener('click', () => this.closeHistoryModal());
-  }
-
+  /* ------------------------------------------------------------- */
+  /* THEME MANAGEMENT                                              */
+  /* ------------------------------------------------------------- */
   initTheme() {
     const savedTheme = localStorage.getItem('ielts_theme') || 'light';
     this.setTheme(savedTheme);
@@ -198,6 +110,274 @@ class IELTSApp {
     this.setTheme(nextTheme);
   }
 
+  /* ------------------------------------------------------------- */
+  /* ELEMENT BINDINGS                                              */
+  /* ------------------------------------------------------------- */
+  initElements() {
+    // Header & Theme
+    this.themeToggleBtn = document.getElementById('theme-toggle-btn');
+    this.themeIconSun = document.getElementById('theme-icon-sun');
+    this.themeIconMoon = document.getElementById('theme-icon-moon');
+    this.moduleNav = document.getElementById('module-nav');
+    this.writingSubControls = document.getElementById('writing-sub-controls');
+
+    // Modules
+    this.viewWriting = document.getElementById('module-view-writing');
+    this.viewReading = document.getElementById('module-view-reading');
+    this.viewListening = document.getElementById('module-view-listening');
+    this.viewSpeaking = document.getElementById('module-view-speaking');
+
+    // Writing Elements
+    this.btnTask1 = document.getElementById('btn-task1');
+    this.btnTask2 = document.getElementById('btn-task2');
+    this.btnSimulator = document.getElementById('btn-simulator');
+    this.btnCoach = document.getElementById('btn-coach');
+    this.timerDisplay = document.getElementById('timer-display');
+    this.timerToggleBtn = document.getElementById('timer-toggle-btn');
+    this.timerPlayIcon = document.getElementById('timer-play-icon');
+    this.timerResetBtn = document.getElementById('timer-reset-btn');
+    this.wordCountNum = document.getElementById('word-count-num');
+    this.wordTargetLabel = document.getElementById('word-target-label');
+    this.wordStatusBadge = document.getElementById('word-status-badge');
+    this.promptSelect = document.getElementById('prompt-select');
+    this.promptCategoryBadge = document.getElementById('prompt-category-badge');
+    this.promptTitle = document.getElementById('prompt-title');
+    this.promptText = document.getElementById('prompt-text');
+    this.promptInstructionsBox = document.getElementById('prompt-instructions-box');
+    this.promptInstructionsText = document.getElementById('prompt-instructions-text');
+    this.task1ChartContainer = document.getElementById('task1-chart-container');
+    this.simulatorContainer = document.getElementById('simulator-container');
+    this.coachContainer = document.getElementById('coach-container');
+    this.essayInput = document.getElementById('essay-input');
+    this.coachSectionInput = document.getElementById('coach-section-input');
+    this.coachTabs = document.getElementById('coach-tabs');
+    this.coachAwlCount = document.getElementById('coach-awl-count');
+    this.coachCohesiveCount = document.getElementById('coach-cohesive-count');
+    this.coachTipBox = document.getElementById('coach-tip-box');
+    this.btnSubmit = document.getElementById('btn-submit');
+    this.btnHistoryToggle = document.getElementById('btn-history-toggle');
+
+    // Modals
+    this.scoreModal = document.getElementById('score-modal');
+    this.modalCloseBtn = document.getElementById('modal-close-btn');
+    this.modalDoneBtn = document.getElementById('modal-done-btn');
+    this.modalOverallBand = document.getElementById('modal-overall-band');
+    this.modalBandDescriptor = document.getElementById('modal-band-descriptor');
+    this.subscoreTrVal = document.getElementById('subscore-tr-val');
+    this.subscoreTrBar = document.getElementById('subscore-tr-bar');
+    this.subscoreCcVal = document.getElementById('subscore-cc-val');
+    this.subscoreCcBar = document.getElementById('subscore-cc-bar');
+    this.subscoreLrVal = document.getElementById('subscore-lr-val');
+    this.subscoreLrBar = document.getElementById('subscore-lr-bar');
+    this.subscoreGraVal = document.getElementById('subscore-gra-val');
+    this.subscoreGraBar = document.getElementById('subscore-gra-bar');
+    this.modalStrengthsList = document.getElementById('modal-strengths-list');
+    this.modalAreasList = document.getElementById('modal-areas-list');
+    this.modalUpgradesList = document.getElementById('modal-upgrades-list');
+
+    this.historyModal = document.getElementById('history-modal');
+    this.historyCloseBtn = document.getElementById('history-close-btn');
+    this.historyList = document.getElementById('history-list');
+
+    this.objectiveScoreModal = document.getElementById('objective-score-modal');
+    this.objectiveModalCloseBtn = document.getElementById('objective-modal-close-btn');
+    this.objectiveModalDoneBtn = document.getElementById('objective-modal-done-btn');
+    this.objectiveModalBadge = document.getElementById('objective-modal-badge');
+    this.objectiveModalTypeLabel = document.getElementById('objective-modal-type-label');
+    this.objectiveModalBand = document.getElementById('objective-modal-band');
+    this.objectiveModalRaw = document.getElementById('objective-modal-raw');
+    this.objectiveModalResultsList = document.getElementById('objective-modal-results-list');
+
+    // Reading Elements
+    this.readingTimerDisplay = document.getElementById('reading-timer-display');
+    this.readingTimerToggleBtn = document.getElementById('reading-timer-toggle-btn');
+    this.readingTimerIcon = document.getElementById('reading-timer-icon');
+    this.readingTimerResetBtn = document.getElementById('reading-timer-reset-btn');
+    this.readingAnsweredCount = document.getElementById('reading-answered-count');
+    this.readingPassageTabs = document.getElementById('reading-passage-tabs');
+    this.readingPassageTitle = document.getElementById('reading-passage-title');
+    this.readingPassageContent = document.getElementById('reading-passage-content');
+    this.readingQuestionsList = document.getElementById('reading-questions-list');
+    this.btnSubmitReading = document.getElementById('btn-submit-reading');
+
+    // Listening Elements
+    this.listeningSectionTabs = document.getElementById('listening-section-tabs');
+    this.listeningSectionTitle = document.getElementById('listening-section-title');
+    this.listeningSectionScenario = document.getElementById('listening-section-scenario');
+    this.listeningSpeakerBanner = document.getElementById('listening-speaker-banner');
+    this.listeningPlayBtn = document.getElementById('listening-audio-play-btn');
+    this.listeningStopBtn = document.getElementById('listening-audio-stop-btn');
+    this.listeningPlayText = document.getElementById('listening-play-text');
+    this.listeningPlayIcon = document.getElementById('listening-play-icon');
+    this.listeningToggleTranscriptBtn = document.getElementById('listening-toggle-transcript-btn');
+    this.listeningTranscriptBox = document.getElementById('listening-transcript-box');
+    this.listeningQuestionsList = document.getElementById('listening-questions-list');
+    this.listeningAnsweredCount = document.getElementById('listening-answered-count');
+    this.btnSubmitListening = document.getElementById('btn-submit-listening');
+
+    // Speaking Elements
+    this.speakingPartTabs = document.getElementById('speaking-part-tabs');
+    this.speakingContainerPart1 = document.getElementById('speaking-container-part1');
+    this.speakingContainerPart2 = document.getElementById('speaking-container-part2');
+    this.speakingContainerPart3 = document.getElementById('speaking-container-part3');
+    this.speakingContainerScore = document.getElementById('speaking-container-score');
+    this.speakingPart1Questions = document.getElementById('speaking-part1-questions');
+    this.speakingPart3Questions = document.getElementById('speaking-part3-questions');
+    this.spPrepTimerDisplay = document.getElementById('sp-prep-timer-display');
+    this.spSpeakTimerDisplay = document.getElementById('sp-speak-timer-display');
+    this.btnSpPrepTimer = document.getElementById('btn-sp-prep-timer');
+    this.btnSpSpeakTimer = document.getElementById('btn-sp-speak-timer');
+    this.btnSpRecordToggle = document.getElementById('btn-sp-record-toggle');
+    this.spRecordLabel = document.getElementById('sp-record-label');
+    this.spRecordingStatus = document.getElementById('sp-recording-status');
+    this.spAudioPlaybackContainer = document.getElementById('sp-audio-playback-container');
+    this.spAudioPlayback = document.getElementById('sp-audio-playback');
+    this.btnTogglePart2Model = document.getElementById('btn-toggle-part2-model');
+    this.part2ModelBox = document.getElementById('part2-model-box');
+    this.part2ModelText = document.getElementById('part2-model-text');
+    this.part2KeywordsPills = document.getElementById('part2-keywords-pills');
+    this.sliderFc = document.getElementById('slider-fc');
+    this.sliderLr = document.getElementById('slider-lr');
+    this.sliderGra = document.getElementById('slider-gra');
+    this.sliderPr = document.getElementById('slider-pr');
+    this.scoreValFc = document.getElementById('score-val-fc');
+    this.scoreValLr = document.getElementById('score-val-lr');
+    this.scoreValGra = document.getElementById('score-val-gra');
+    this.scoreValPr = document.getElementById('score-val-pr');
+    this.spCalculatedBand = document.getElementById('sp-calculated-band');
+    this.btnSaveSpeakingSession = document.getElementById('btn-save-speaking-session');
+  }
+
+  /* ------------------------------------------------------------- */
+  /* EVENT LISTENERS                                               */
+  /* ------------------------------------------------------------- */
+  initEvents() {
+    // Theme Switcher
+    if (this.themeToggleBtn) {
+      this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+    }
+
+    // Top Module Navigation
+    this.moduleNav.querySelectorAll('.module-nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setModule(btn.dataset.module);
+      });
+    });
+
+    // Writing Controls
+    this.btnTask1.addEventListener('click', () => this.setTaskType('task1'));
+    this.btnTask2.addEventListener('click', () => this.setTaskType('task2'));
+    this.btnSimulator.addEventListener('click', () => this.setMode('simulator'));
+    this.btnCoach.addEventListener('click', () => this.setMode('coach'));
+    this.timerToggleBtn.addEventListener('click', () => this.toggleTimer());
+    this.timerResetBtn.addEventListener('click', () => this.resetTimer());
+    this.promptSelect.addEventListener('change', (e) => this.selectPromptById(e.target.value));
+
+    this.essayInput.addEventListener('input', () => {
+      this.updateWordCount(this.essayInput.value);
+      this.debounceAutosave(this.essayInput.value);
+    });
+
+    this.coachSectionInput.addEventListener('input', () => {
+      this.coachSections[this.coachSection] = this.coachSectionInput.value;
+      const fullText = this.getAssembledCoachText();
+      this.updateWordCount(fullText);
+      this.updateCoachLiveStats(this.coachSectionInput.value);
+      this.debounceAutosave(fullText);
+    });
+
+    this.coachTabs.querySelectorAll('.coach-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.coachTabs.querySelectorAll('.coach-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.switchCoachSection(btn.dataset.section);
+      });
+    });
+
+    this.btnSubmit.addEventListener('click', () => this.submitEssay());
+    this.modalCloseBtn.addEventListener('click', () => this.closeScoreModal());
+    this.modalDoneBtn.addEventListener('click', () => this.closeScoreModal());
+    this.btnHistoryToggle.addEventListener('click', () => this.openHistoryModal());
+    this.historyCloseBtn.addEventListener('click', () => this.closeHistoryModal());
+
+    // Objective Modals
+    this.objectiveModalCloseBtn.addEventListener('click', () => this.closeObjectiveModal());
+    this.objectiveModalDoneBtn.addEventListener('click', () => this.closeObjectiveModal());
+
+    // Reading Events
+    this.readingTimerToggleBtn.addEventListener('click', () => this.toggleReadingTimer());
+    this.readingTimerResetBtn.addEventListener('click', () => this.resetReadingTimer());
+    this.readingPassageTabs.querySelectorAll('.segmented-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.readingPassageTabs.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectReadingPassage(Number(btn.dataset.passage));
+      });
+    });
+    this.btnSubmitReading.addEventListener('click', () => this.submitReadingTest());
+
+    // Listening Events
+    this.listeningSectionTabs.querySelectorAll('.segmented-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.listeningSectionTabs.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectListeningSection(Number(btn.dataset.section));
+      });
+    });
+    this.listeningPlayBtn.addEventListener('click', () => this.toggleListeningAudio());
+    this.listeningStopBtn.addEventListener('click', () => this.stopListeningAudio());
+    this.listeningToggleTranscriptBtn.addEventListener('click', () => {
+      const isHidden = this.listeningTranscriptBox.style.display === 'none';
+      this.listeningTranscriptBox.style.display = isHidden ? 'block' : 'none';
+    });
+    this.btnSubmitListening.addEventListener('click', () => this.submitListeningTest());
+
+    // Speaking Events
+    this.speakingPartTabs.querySelectorAll('.segmented-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.speakingPartTabs.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectSpeakingPart(btn.dataset.spPart);
+      });
+    });
+    this.btnSpPrepTimer.addEventListener('click', () => this.toggleSpeakingPrepTimer());
+    this.btnSpSpeakTimer.addEventListener('click', () => this.toggleSpeakingSpeakTimer());
+    this.btnSpRecordToggle.addEventListener('click', () => this.toggleVoiceRecording());
+    this.btnTogglePart2Model.addEventListener('click', () => {
+      const isHidden = this.part2ModelBox.style.display === 'none';
+      this.part2ModelBox.style.display = isHidden ? 'block' : 'none';
+    });
+
+    [this.sliderFc, this.sliderLr, this.sliderGra, this.sliderPr].forEach(slider => {
+      slider.addEventListener('input', () => this.updateSpeakingSliders());
+    });
+    this.btnSaveSpeakingSession.addEventListener('click', () => this.saveSpeakingSession());
+  }
+
+  /* ------------------------------------------------------------- */
+  /* MODULE SWITCHING                                              */
+  /* ------------------------------------------------------------- */
+  setModule(moduleName) {
+    this.currentModule = moduleName;
+    this.moduleNav.querySelectorAll('.module-nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.module === moduleName);
+    });
+
+    this.viewWriting.style.display = moduleName === 'writing' ? 'flex' : 'none';
+    this.viewReading.style.display = moduleName === 'reading' ? 'flex' : 'none';
+    this.viewListening.style.display = moduleName === 'listening' ? 'flex' : 'none';
+    this.viewSpeaking.style.display = moduleName === 'speaking' ? 'flex' : 'none';
+    this.writingSubControls.style.display = moduleName === 'writing' ? 'flex' : 'none';
+
+    // Stop audio/recording when leaving module
+    if (moduleName !== 'listening' && this.listeningPlayer) {
+      this.listeningPlayer.stop();
+    }
+  }
+
+  /* ------------------------------------------------------------- */
+  /* WRITING MODULE LOGIC                                          */
+  /* ------------------------------------------------------------- */
   setTaskType(type) {
     if (this.currentTask === type) return;
     this.currentTask = type;
@@ -225,7 +405,6 @@ class IELTSApp {
   setMode(mode) {
     if (this.currentMode === mode) return;
     
-    // Bidirectional sync
     if (mode === 'simulator') {
       const assembled = this.getAssembledCoachText();
       if (assembled.trim().length > 0) {
@@ -273,7 +452,6 @@ class IELTSApp {
     this.currentPrompt = prompt;
     this.promptTitle.textContent = prompt.title;
 
-    // Clean question text and instructions
     let questionText = prompt.promptText || prompt.question || '';
     let instructions = prompt.instructions;
 
@@ -304,7 +482,6 @@ class IELTSApp {
       this.task1ChartContainer.style.display = 'none';
     }
 
-    // Load saved draft if exists
     const savedDraft = await storageService.getDraft(prompt.id);
     if (savedDraft) {
       this.essayInput.value = savedDraft;
@@ -401,7 +578,6 @@ class IELTSApp {
     }, 500);
   }
 
-  // Timer Methods
   toggleTimer() {
     if (this.timerRunning) {
       this.pauseTimer();
@@ -412,81 +588,84 @@ class IELTSApp {
 
   startTimer() {
     this.timerRunning = true;
-    this.timerPlayIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>`;
+    this.timerPlayIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
     this.timerInterval = setInterval(() => {
       if (this.timerSeconds > 0) {
         this.timerSeconds--;
-        this.renderTimer();
+        this.renderTimerDisplay();
       } else {
         this.pauseTimer();
-        alert('Time is up! Review and submit your essay.');
       }
     }, 1000);
   }
 
   pauseTimer() {
     this.timerRunning = false;
+    this.timerPlayIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
     clearInterval(this.timerInterval);
-    this.timerPlayIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
   }
 
   resetTimer() {
     this.pauseTimer();
-    this.timerSeconds = (this.currentTask === 'task1' ? 20 : 40) * 60;
-    this.renderTimer();
+    this.timerSeconds = this.currentTask === 'task1' ? 20 * 60 : 40 * 60;
+    this.renderTimerDisplay();
   }
 
-  renderTimer() {
+  renderTimerDisplay() {
     const mins = Math.floor(this.timerSeconds / 60);
     const secs = this.timerSeconds % 60;
-    this.timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    
-    if (this.timerSeconds <= 300) {
+    this.timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    if (this.timerSeconds < 300) {
       this.timerDisplay.classList.add('warning');
     } else {
       this.timerDisplay.classList.remove('warning');
     }
   }
 
-  // Evaluation & Modal Handling
   async submitEssay() {
-    const text = this.currentMode === 'simulator' 
-      ? this.essayInput.value 
+    const textToSubmit = this.currentMode === 'simulator'
+      ? this.essayInput.value
       : this.getAssembledCoachText();
 
-    if (!text || text.trim().length === 0) {
-      alert('Please write or paste your essay before requesting a band review.');
+    if (!textToSubmit || textToSubmit.trim().length === 0) {
+      alert('Please write your essay before submitting for review.');
       return;
     }
 
-    const evaluation = evaluateEssay(text, this.currentPrompt, this.currentTask);
-
-    // Save submission record
-    const record = {
-      id: 'essay-' + Date.now(),
+    const evaluation = evaluateEssay(textToSubmit, {
       taskType: this.currentTask,
-      promptId: this.currentPrompt.id,
-      promptTitle: this.currentPrompt.title,
-      content: text,
-      wordCount: evaluation.wordCount,
+      category: this.currentPrompt ? this.currentPrompt.category : 'opinion'
+    });
+
+    const submissionRecord = {
+      id: `essay_${Date.now()}`,
+      module: 'writing',
+      taskType: this.currentTask,
+      promptId: this.currentPrompt ? this.currentPrompt.id : 'unknown',
+      promptTitle: this.currentPrompt ? this.currentPrompt.title : 'IELTS Practice',
+      essayText: textToSubmit,
+      wordCount: evaluation.tokenized.wordCount,
       scores: evaluation.scores,
       feedback: evaluation.feedback,
       createdAt: new Date().toISOString()
     };
-    await storageService.saveSubmission(record);
-    await storageService.clearDraft(this.currentPrompt.id);
 
-    this.displayScoreModal(evaluation);
+    await storageService.saveSubmission(submissionRecord);
+    if (this.currentPrompt) {
+      await storageService.clearDraft(this.currentPrompt.id);
+    }
+
+    this.displayScoreModal(submissionRecord);
   }
 
-  displayScoreModal(evaluation) {
-    const { scores, feedback } = evaluation;
+  displayScoreModal(submission) {
+    const { scores, feedback } = submission;
     this.modalOverallBand.textContent = scores.overall.toFixed(1);
-    this.modalBandDescriptor.textContent = BAND_DESCRIPTORS[scores.overall] || 'Official IELTS Band';
+    const descriptor = BAND_DESCRIPTORS[scores.overall] || 'Official IELTS Score';
+    this.modalBandDescriptor.textContent = descriptor;
 
-    // Subscores
-    this.subscoreTrVal.textContent = scores.tr.toFixed(1);
-    this.subscoreTrBar.style.width = `${(scores.tr / 9) * 100}%`;
+    this.subscoreTrVal.textContent = scores.ta ? scores.ta.toFixed(1) : scores.tr.toFixed(1);
+    this.subscoreTrBar.style.width = `${((scores.ta || scores.tr) / 9) * 100}%`;
 
     this.subscoreCcVal.textContent = scores.cc.toFixed(1);
     this.subscoreCcBar.style.width = `${(scores.cc / 9) * 100}%`;
@@ -497,7 +676,6 @@ class IELTSApp {
     this.subscoreGraVal.textContent = scores.gra.toFixed(1);
     this.subscoreGraBar.style.width = `${(scores.gra / 9) * 100}%`;
 
-    // Strengths
     this.modalStrengthsList.innerHTML = feedback.strengths.length > 0
       ? feedback.strengths.map(s => `
           <div class="feedback-item">
@@ -506,7 +684,6 @@ class IELTSApp {
           </div>`).join('')
       : '<div class="text-xs text-muted">No specific strengths detected. Focus on word count and structure.</div>';
 
-    // Areas to Improve
     this.modalAreasList.innerHTML = feedback.areasToImprove.length > 0
       ? feedback.areasToImprove.map(a => `
           <div class="feedback-item">
@@ -515,7 +692,6 @@ class IELTSApp {
           </div>`).join('')
       : '<div class="text-xs text-muted">No critical penalties. Essay fulfills standard band requirements.</div>';
 
-    // Vocabulary Upgrades
     if (feedback.suggestedUpgrades && feedback.suggestedUpgrades.length > 0) {
       document.getElementById('modal-upgrades-section').style.display = 'block';
       this.modalUpgradesList.innerHTML = feedback.suggestedUpgrades.map(u => `
@@ -534,58 +710,580 @@ class IELTSApp {
     this.scoreModal.style.display = 'none';
   }
 
+  closeObjectiveModal() {
+    this.objectiveScoreModal.style.display = 'none';
+  }
+
+  /* ------------------------------------------------------------- */
+  /* READING MODULE LOGIC                                          */
+  /* ------------------------------------------------------------- */
+  initReadingModule() {
+    this.selectReadingPassage(0);
+  }
+
+  selectReadingPassage(index) {
+    this.currentReadingPassageIndex = index;
+    const passage = this.currentReadingTest.passages[index];
+    this.readingPassageTitle.textContent = passage.title;
+    this.readingPassageContent.textContent = passage.text;
+
+    this.renderReadingQuestions(passage.questions);
+    this.updateReadingAnsweredCount();
+  }
+
+  renderReadingQuestions(questions) {
+    this.readingQuestionsList.innerHTML = questions.map(q => {
+      let inputHtml = '';
+      const currentAns = this.readingAnswers[q.id] || '';
+
+      if (q.type === 'tfng') {
+        inputHtml = `
+          <div class="options-row">
+            ${['TRUE', 'FALSE', 'NOT GIVEN'].map(opt => `
+              <button class="option-btn ${currentAns === opt ? 'selected' : ''}" data-qid="${q.id}" data-opt="${opt}">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+        `;
+      } else if (q.type === 'multiple-choice') {
+        inputHtml = `
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            ${q.options.map(opt => {
+              const optVal = opt.charAt(0);
+              return `
+                <button class="option-btn ${currentAns === optVal ? 'selected' : ''}" style="text-align: left; width: 100%; justify-content: flex-start;" data-qid="${q.id}" data-opt="${optVal}">
+                  ${opt}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } else {
+        inputHtml = `
+          <input type="text" class="answer-input" placeholder="Type answer..." value="${currentAns}" data-qid="${q.id}">
+        `;
+      }
+
+      return `
+        <div class="question-card" id="q-card-${q.id}">
+          <div class="question-prompt">
+            <span style="font-weight: 700; color: var(--primary);">Q${q.number}.</span> ${q.prompt}
+          </div>
+          ${inputHtml}
+        </div>
+      `;
+    }).join('');
+
+    // Attach question input listeners
+    this.readingQuestionsList.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const qid = btn.dataset.qid;
+        const opt = btn.dataset.opt;
+        this.readingAnswers[qid] = opt;
+
+        const parentCard = document.getElementById(`q-card-${qid}`);
+        parentCard.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.updateReadingAnsweredCount();
+      });
+    });
+
+    this.readingQuestionsList.querySelectorAll('.answer-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        this.readingAnswers[input.dataset.qid] = e.target.value;
+        this.updateReadingAnsweredCount();
+      });
+    });
+  }
+
+  updateReadingAnsweredCount() {
+    let count = 0;
+    this.currentReadingTest.passages.forEach(p => {
+      p.questions.forEach(q => {
+        if (this.readingAnswers[q.id] && String(this.readingAnswers[q.id]).trim().length > 0) {
+          count++;
+        }
+      });
+    });
+    this.readingAnsweredCount.textContent = count;
+  }
+
+  toggleReadingTimer() {
+    if (this.readingTimerRunning) {
+      this.pauseReadingTimer();
+    } else {
+      this.startReadingTimer();
+    }
+  }
+
+  startReadingTimer() {
+    this.readingTimerRunning = true;
+    this.readingTimerIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    this.readingTimerInterval = setInterval(() => {
+      if (this.readingTimerSeconds > 0) {
+        this.readingTimerSeconds--;
+        const mins = Math.floor(this.readingTimerSeconds / 60);
+        const secs = this.readingTimerSeconds % 60;
+        this.readingTimerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      } else {
+        this.pauseReadingTimer();
+      }
+    }, 1000);
+  }
+
+  pauseReadingTimer() {
+    this.readingTimerRunning = false;
+    this.readingTimerIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+    clearInterval(this.readingTimerInterval);
+  }
+
+  resetReadingTimer() {
+    this.pauseReadingTimer();
+    this.readingTimerSeconds = 60 * 60;
+    this.readingTimerDisplay.textContent = '60:00';
+  }
+
+  async submitReadingTest() {
+    const results = evaluateReadingTest(this.currentReadingTest, this.readingAnswers);
+
+    const submission = {
+      id: `reading_${Date.now()}`,
+      module: 'reading',
+      title: this.currentReadingTest.title,
+      scores: { overall: results.band },
+      rawScore: results.rawScore,
+      totalQuestions: results.totalQuestions,
+      questionResults: results.questionResults,
+      createdAt: new Date().toISOString()
+    };
+
+    await storageService.saveSubmission(submission);
+    this.displayObjectiveScoreModal('IELTS Academic Reading', results);
+  }
+
+  displayObjectiveScoreModal(testType, results) {
+    this.objectiveModalBadge.textContent = testType;
+    this.objectiveModalTypeLabel.textContent = `Official ${testType} Band`;
+    this.objectiveModalBand.textContent = results.band.toFixed(1);
+    const pct = Math.round((results.rawScore / results.totalQuestions) * 100);
+    this.objectiveModalRaw.textContent = `Raw Score: ${results.rawScore} / ${results.totalQuestions} (${pct}%)`;
+
+    this.objectiveModalResultsList.innerHTML = results.questionResults.map(r => `
+      <div class="feedback-box" style="border-left: 3px solid ${r.isCorrect ? 'var(--success)' : 'var(--destructive)'};">
+        <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem;">
+          <span>Q${r.number}. ${r.prompt.slice(0, 48)}...</span>
+          <span style="color: ${r.isCorrect ? 'var(--success)' : 'var(--destructive)'};">
+            ${r.isCorrect ? 'Correct (+1)' : 'Incorrect (0)'}
+          </span>
+        </div>
+        <div class="text-xs" style="margin-top: 4px; color: var(--muted-foreground);">
+          <span>Your answer: <strong>${r.userAnswer || '(Blank)'}</strong></span> · 
+          <span>Correct answer: <strong style="color: var(--primary);">${r.correctAnswer}</strong></span>
+        </div>
+        <div class="text-xs" style="margin-top: 4px; color: var(--foreground); font-style: italic;">
+          ${r.explanation}
+        </div>
+      </div>
+    `).join('');
+
+    this.objectiveScoreModal.style.display = 'flex';
+  }
+
+  /* ------------------------------------------------------------- */
+  /* LISTENING MODULE LOGIC                                        */
+  /* ------------------------------------------------------------- */
+  initListeningModule() {
+    this.listeningPlayer = new OfflineAudioPlayer({
+      onProgress: ({ currentIndex, totalLines, currentLine }) => {
+        this.listeningSpeakerBanner.innerHTML = `
+          <div>
+            <strong style="color: var(--primary);">${currentLine.speaker}:</strong> 
+            <span>${currentLine.text}</span>
+          </div>
+        `;
+      },
+      onStateChange: ({ isPlaying, isPaused }) => {
+        if (isPlaying) {
+          this.listeningPlayIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+          this.listeningPlayText.textContent = 'Pause Audio';
+        } else {
+          this.listeningPlayIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+          this.listeningPlayText.textContent = isPaused ? 'Resume Audio' : 'Play Offline Audio';
+        }
+      }
+    });
+
+    this.selectListeningSection(0);
+  }
+
+  selectListeningSection(index) {
+    this.currentListeningSectionIndex = index;
+    const section = this.currentListeningTest.sections[index];
+    this.listeningSectionTitle.textContent = section.title;
+    this.listeningSectionScenario.textContent = section.scenario;
+
+    if (this.listeningPlayer) {
+      this.listeningPlayer.loadDialogue(section.dialogue);
+    }
+
+    this.listeningTranscriptBox.innerHTML = section.dialogue.map(d => `
+      <div style="margin-bottom: 6px; font-size: 0.85rem;">
+        <strong style="color: var(--primary);">${d.speaker}:</strong> ${d.text}
+      </div>
+    `).join('');
+
+    this.renderListeningQuestions(section.questions);
+    this.updateListeningAnsweredCount();
+  }
+
+  renderListeningQuestions(questions) {
+    this.listeningQuestionsList.innerHTML = questions.map(q => {
+      let inputHtml = '';
+      const currentAns = this.listeningAnswers[q.id] || '';
+
+      if (q.type === 'multiple-choice') {
+        inputHtml = `
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            ${q.options.map(opt => {
+              const optVal = opt.charAt(0);
+              return `
+                <button class="option-btn ${currentAns === optVal ? 'selected' : ''}" style="text-align: left; width: 100%; justify-content: flex-start;" data-qid="${q.id}" data-opt="${optVal}">
+                  ${opt}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } else {
+        inputHtml = `
+          <input type="text" class="answer-input" placeholder="Type answer..." value="${currentAns}" data-qid="${q.id}">
+        `;
+      }
+
+      return `
+        <div class="question-card" id="lq-card-${q.id}">
+          <div class="question-prompt">
+            <span style="font-weight: 700; color: var(--primary);">Q${q.number}.</span> ${q.prompt}
+          </div>
+          ${inputHtml}
+        </div>
+      `;
+    }).join('');
+
+    this.listeningQuestionsList.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const qid = btn.dataset.qid;
+        const opt = btn.dataset.opt;
+        this.listeningAnswers[qid] = opt;
+
+        const parentCard = document.getElementById(`lq-card-${qid}`);
+        parentCard.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.updateListeningAnsweredCount();
+      });
+    });
+
+    this.listeningQuestionsList.querySelectorAll('.answer-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        this.listeningAnswers[input.dataset.qid] = e.target.value;
+        this.updateListeningAnsweredCount();
+      });
+    });
+  }
+
+  updateListeningAnsweredCount() {
+    let count = 0;
+    this.currentListeningTest.sections.forEach(s => {
+      s.questions.forEach(q => {
+        if (this.listeningAnswers[q.id] && String(this.listeningAnswers[q.id]).trim().length > 0) {
+          count++;
+        }
+      });
+    });
+    this.listeningAnsweredCount.textContent = count;
+  }
+
+  toggleListeningAudio() {
+    if (!this.listeningPlayer) return;
+    if (this.listeningPlayer.isPlaying) {
+      this.listeningPlayer.pause();
+    } else {
+      this.listeningPlayer.play();
+    }
+  }
+
+  stopListeningAudio() {
+    if (this.listeningPlayer) {
+      this.listeningPlayer.stop();
+      this.listeningSpeakerBanner.innerHTML = '<span class="text-muted">Audio stopped.</span>';
+    }
+  }
+
+  async submitListeningTest() {
+    if (this.listeningPlayer) this.listeningPlayer.stop();
+    const results = evaluateListeningTest(this.currentListeningTest, this.listeningAnswers);
+
+    const submission = {
+      id: `listening_${Date.now()}`,
+      module: 'listening',
+      title: this.currentListeningTest.title,
+      scores: { overall: results.band },
+      rawScore: results.rawScore,
+      totalQuestions: results.totalQuestions,
+      questionResults: results.questionResults,
+      createdAt: new Date().toISOString()
+    };
+
+    await storageService.saveSubmission(submission);
+    this.displayObjectiveScoreModal('IELTS Academic Listening', results);
+  }
+
+  /* ------------------------------------------------------------- */
+  /* SPEAKING MODULE LOGIC                                         */
+  /* ------------------------------------------------------------- */
+  initSpeakingModule() {
+    this.renderSpeakingPart1();
+    this.renderSpeakingPart2();
+    this.renderSpeakingPart3();
+    this.updateSpeakingSliders();
+  }
+
+  selectSpeakingPart(partKey) {
+    this.speakingContainerPart1.style.display = partKey === 'part1' ? 'flex' : 'none';
+    this.speakingContainerPart2.style.display = partKey === 'part2' ? 'flex' : 'none';
+    this.speakingContainerPart3.style.display = partKey === 'part3' ? 'flex' : 'none';
+    this.speakingContainerScore.style.display = partKey === 'score' ? 'flex' : 'none';
+  }
+
+  renderSpeakingPart1() {
+    const qList = this.speakingTopic.part1.questions;
+    this.speakingPart1Questions.innerHTML = qList.map((q, idx) => `
+      <section class="editor-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+          <h4 class="text-sm font-semibold" style="flex: 1;">${idx + 1}. ${q.question}</h4>
+          <button class="icon-btn btn-speak-question" data-text="${q.question}" title="Listen to Examiner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </button>
+        </div>
+
+        <button class="btn-secondary btn-toggle-answer" style="font-size: 0.75rem; width: 100%; justify-content: space-between; margin-top: 6px;">
+          <span>View Band 9 Model Answer</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+
+        <div class="model-answer-box" style="display: none; padding: 10px; background: var(--background); border-radius: 6px; font-size: 0.85rem; line-height: 1.5; margin-top: 6px;">
+          <p>${q.modelAnswer}</p>
+          <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
+            ${q.band9KeyWords.map(w => `<span class="tag-badge" style="font-size: 0.68rem;">${w}</span>`).join('')}
+          </div>
+        </div>
+      </section>
+    `).join('');
+
+    this.speakingPart1Questions.querySelectorAll('.btn-speak-question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(btn.dataset.text);
+          u.rate = 0.95;
+          window.speechSynthesis.speak(u);
+        }
+      });
+    });
+
+    this.speakingPart1Questions.querySelectorAll('.btn-toggle-answer').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const box = btn.nextElementSibling;
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+  }
+
+  renderSpeakingPart2() {
+    const p2 = this.speakingTopic.part2;
+    document.getElementById('cue-card-topic').textContent = p2.topic;
+    document.getElementById('cue-card-bullets').innerHTML = p2.cueCard.map(b => `<li>${b}</li>`).join('');
+    this.part2ModelText.textContent = p2.modelAnswer;
+    this.part2KeywordsPills.innerHTML = p2.band9KeyWords.map(w => `<span class="tag-badge">${w}</span>`).join('');
+  }
+
+  renderSpeakingPart3() {
+    const qList = this.speakingTopic.part3.questions;
+    this.speakingPart3Questions.innerHTML = qList.map((q, idx) => `
+      <section class="editor-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+          <h4 class="text-sm font-semibold" style="flex: 1;">${idx + 1}. ${q.question}</h4>
+          <button class="icon-btn btn-speak-question" data-text="${q.question}" title="Listen to Examiner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </button>
+        </div>
+
+        <button class="btn-secondary btn-toggle-answer" style="font-size: 0.75rem; width: 100%; justify-content: space-between; margin-top: 6px;">
+          <span>View Band 9 Analytical Response</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+
+        <div class="model-answer-box" style="display: none; padding: 10px; background: var(--background); border-radius: 6px; font-size: 0.85rem; line-height: 1.5; margin-top: 6px;">
+          <p>${q.modelAnswer}</p>
+          <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
+            ${q.band9KeyWords.map(w => `<span class="tag-badge" style="font-size: 0.68rem;">${w}</span>`).join('')}
+          </div>
+        </div>
+      </section>
+    `).join('');
+
+    this.speakingPart3Questions.querySelectorAll('.btn-speak-question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(btn.dataset.text);
+          u.rate = 0.95;
+          window.speechSynthesis.speak(u);
+        }
+      });
+    });
+
+    this.speakingPart3Questions.querySelectorAll('.btn-toggle-answer').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const box = btn.nextElementSibling;
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+  }
+
+  toggleSpeakingPrepTimer() {
+    if (this.speakingPrepRunning) {
+      clearInterval(this.speakingPrepInterval);
+      this.speakingPrepRunning = false;
+      this.btnSpPrepTimer.textContent = 'Start Prep';
+    } else {
+      this.speakingPrepRunning = true;
+      this.btnSpPrepTimer.textContent = 'Pause';
+      this.speakingPrepInterval = setInterval(() => {
+        if (this.speakingPrepSeconds > 0) {
+          this.speakingPrepSeconds--;
+          const s = this.speakingPrepSeconds;
+          this.spPrepTimerDisplay.textContent = `00:${String(s).padStart(2, '0')}`;
+        } else {
+          clearInterval(this.speakingPrepInterval);
+          this.speakingPrepRunning = false;
+          this.btnSpPrepTimer.textContent = 'Prep Ended';
+          this.spPrepTimerDisplay.textContent = '00:00';
+        }
+      }, 1000);
+    }
+  }
+
+  toggleSpeakingSpeakTimer() {
+    if (this.speakingSpeakRunning) {
+      clearInterval(this.speakingSpeakInterval);
+      this.speakingSpeakRunning = false;
+      this.btnSpSpeakTimer.textContent = 'Start Speak';
+    } else {
+      this.speakingSpeakRunning = true;
+      this.btnSpSpeakTimer.textContent = 'Pause';
+      this.speakingSpeakInterval = setInterval(() => {
+        if (this.speakingSpeakSeconds > 0) {
+          this.speakingSpeakSeconds--;
+          const m = Math.floor(this.speakingSpeakSeconds / 60);
+          const s = this.speakingSpeakSeconds % 60;
+          this.spSpeakTimerDisplay.textContent = `0${m}:${String(s).padStart(2, '0')}`;
+        } else {
+          clearInterval(this.speakingSpeakInterval);
+          this.speakingSpeakRunning = false;
+          this.btnSpSpeakTimer.textContent = 'Time Up';
+          this.spSpeakTimerDisplay.textContent = '00:00';
+        }
+      }, 1000);
+    }
+  }
+
+  async toggleVoiceRecording() {
+    if (this.speakingRecorder.isRecording) {
+      this.spRecordLabel.textContent = 'Saving...';
+      const result = await this.speakingRecorder.stop();
+      this.spRecordLabel.textContent = 'Record New Response';
+      this.btnSpRecordToggle.classList.remove('btn-danger');
+      this.spRecordingStatus.innerHTML = '<span>Recording Complete</span>';
+
+      if (result && result.url) {
+        this.spAudioPlayback.src = result.url;
+        this.spAudioPlaybackContainer.style.display = 'block';
+      }
+    } else {
+      try {
+        await this.speakingRecorder.start();
+        this.spRecordLabel.textContent = 'Stop Recording';
+        this.spRecordingStatus.innerHTML = '<span class="recording-dot"></span><span>Recording Live Audio...</span>';
+      } catch (err) {
+        alert('Could not access microphone: ' + err.message);
+      }
+    }
+  }
+
+  updateSpeakingSliders() {
+    const fc = Number(this.sliderFc.value);
+    const lr = Number(this.sliderLr.value);
+    const gra = Number(this.sliderGra.value);
+    const pr = Number(this.sliderPr.value);
+
+    this.scoreValFc.textContent = fc.toFixed(1);
+    this.scoreValLr.textContent = lr.toFixed(1);
+    this.scoreValGra.textContent = gra.toFixed(1);
+    this.scoreValPr.textContent = pr.toFixed(1);
+
+    const result = calculateSpeakingBand({ fc, lr, gra, pr });
+    this.spCalculatedBand.textContent = result.overall.toFixed(1);
+  }
+
+  async saveSpeakingSession() {
+    const fc = Number(this.sliderFc.value);
+    const lr = Number(this.sliderLr.value);
+    const gra = Number(this.sliderGra.value);
+    const pr = Number(this.sliderPr.value);
+
+    const result = calculateSpeakingBand({ fc, lr, gra, pr });
+
+    const submission = {
+      id: `speaking_${Date.now()}`,
+      module: 'speaking',
+      title: `Speaking: ${this.speakingTopic.title}`,
+      scores: {
+        overall: result.overall,
+        fc, lr, gra, pr
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    await storageService.saveSubmission(submission);
+    alert(`Speaking session saved to history with Band ${result.overall.toFixed(1)}!`);
+  }
+
+  /* ------------------------------------------------------------- */
+  /* UNIFIED HISTORY MODAL                                         */
+  /* ------------------------------------------------------------- */
   async openHistoryModal() {
     const list = await storageService.getHistory();
     if (list.length === 0) {
-      this.historyList.innerHTML = '<div class="text-sm text-muted" style="padding: 20px 0; text-align: center;">No completed essays yet. Write and submit your first essay!</div>';
+      this.historyList.innerHTML = '<div class="text-sm text-muted" style="padding: 20px 0; text-align: center;">No practice submissions yet. Complete a test in any section!</div>';
     } else {
-      this.historyList.innerHTML = list.map(item => `
-        <div class="feedback-box" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;" data-id="${item.id}">
-          <div style="flex: 1; cursor: pointer;" class="history-item-info">
-            <div style="font-weight: 600; font-size: 0.85rem;">${item.promptTitle || 'IELTS Practice'}</div>
-            <div class="text-xs text-muted">${new Date(item.createdAt).toLocaleDateString()} · ${item.wordCount} words · ${item.taskType ? item.taskType.toUpperCase() : 'TASK 2'}</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: var(--font-mono); cursor: pointer;" class="history-item-band">
+      this.historyList.innerHTML = list.map(item => {
+        const mod = item.module || (item.taskType ? 'writing' : 'practice');
+        const badgeColor = mod === 'writing' ? 'var(--primary)' : (mod === 'reading' ? 'var(--success)' : (mod === 'listening' ? 'var(--warning)' : '#a855f7'));
+        const title = item.promptTitle || item.title || 'IELTS Session';
+        const sub = item.wordCount ? `${item.wordCount} words` : (item.rawScore ? `${item.rawScore}/${item.totalQuestions} items` : 'Self Assessment');
+
+        return `
+          <div class="feedback-box" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.85rem;">${title}</div>
+              <div class="text-xs text-muted">${new Date(item.createdAt).toLocaleDateString()} · ${sub} · <span style="text-transform: uppercase; color: ${badgeColor}; font-weight: 600;">${mod}</span></div>
+            </div>
+            <div style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: var(--font-mono);">
               Band ${item.scores.overall.toFixed(1)}
             </div>
-            <button class="secondary-btn btn-load-history" style="padding: 4px 10px; font-size: 0.75rem;" title="Load into editor">
-              Load
-            </button>
           </div>
-        </div>`).join('');
-
-      // Add click listeners
-      this.historyList.querySelectorAll('.feedback-box').forEach(card => {
-        const found = list.find(l => l.id === card.dataset.id);
-        if (!found) return;
-
-        const infoArea = card.querySelector('.history-item-info');
-        const bandPill = card.querySelector('.history-item-band');
-        const showScore = () => {
-          this.closeHistoryModal();
-          this.displayScoreModal(found);
-        };
-        if (infoArea) infoArea.addEventListener('click', showScore);
-        if (bandPill) bandPill.addEventListener('click', showScore);
-
-        const loadBtn = card.querySelector('.btn-load-history');
-        if (loadBtn) {
-          loadBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (found.taskType && found.taskType !== this.currentTask) {
-              this.setTask(found.taskType);
-            }
-            if (found.promptId) {
-              this.selectPromptById(found.promptId);
-            }
-            this.essayInput.value = found.essayText || '';
-            this.distributeDraftToCoach(found.essayText || '');
-            this.updateWordCount(found.essayText || '');
-            this.closeHistoryModal();
-          });
-        }
-      });
+        `;
+      }).join('');
     }
 
     this.historyModal.style.display = 'flex';
@@ -599,8 +1297,8 @@ class IELTSApp {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
-          .then(() => console.log('IELTS Offline ServiceWorker Active'))
-          .catch(err => console.log('ServiceWorker registration skipped:', err));
+          .then(() => console.log('IELTS Complete Offline ServiceWorker Active'))
+          .catch(err => console.log('ServiceWorker notice:', err));
       });
     }
   }

@@ -1,5 +1,5 @@
 // IELTS Academic Offline - Service Worker
-const CACHE_NAME = 'ielts-offline-v1';
+const CACHE_NAME = 'ielts-offline-v2';
 
 const STATIC_ASSETS = [
   './',
@@ -9,6 +9,9 @@ const STATIC_ASSETS = [
   './js/app.js',
   './js/data/task1Prompts.js',
   './js/data/task2Prompts.js',
+  './js/data/readingTests.js',
+  './js/data/listeningTests.js',
+  './js/data/speakingTests.js',
   './js/data/academicWordList.js',
   './js/data/cohesiveDevices.js',
   './js/engine/tokenizer.js',
@@ -17,6 +20,9 @@ const STATIC_ASSETS = [
   './js/engine/lexicalResource.js',
   './js/engine/grammaticalRange.js',
   './js/engine/scoringEngine.js',
+  './js/engine/readingEngine.js',
+  './js/engine/listeningEngine.js',
+  './js/engine/speakingEngine.js',
   './js/services/storageService.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
