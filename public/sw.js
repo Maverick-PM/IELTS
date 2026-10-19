@@ -17,7 +17,10 @@ const STATIC_ASSETS = [
   './js/engine/lexicalResource.js',
   './js/engine/grammaticalRange.js',
   './js/engine/scoringEngine.js',
-  './js/services/storageService.js'
+  './js/services/storageService.js',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon.svg'
 ];
 
 self.addEventListener('install', (event) => {

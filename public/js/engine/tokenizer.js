@@ -26,8 +26,15 @@ export function tokenize(rawText) {
     };
   }
 
-  // Paragraphs are separated by 2 or more newlines
-  const rawParagraphs = clean.split(/\n\s*\n+/);
+  // Paragraphs are separated by 2 or more newlines, or single newlines on mobile keyboards
+  let rawParagraphs = clean.split(/\n\s*\n+/);
+  if (rawParagraphs.length === 1 && clean.includes('\n')) {
+    // If double newlines were not used, check if lines represent distinct paragraphs
+    const lines = clean.split(/\n+/).map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length > 1) {
+      rawParagraphs = lines;
+    }
+  }
   const paragraphs = rawParagraphs.map(p => p.trim()).filter(p => p.length > 0);
 
   // Sentences split on terminal punctuation

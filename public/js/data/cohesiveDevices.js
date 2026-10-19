@@ -35,8 +35,10 @@ export const COHESIVE_DEVICES = {
 // Overview indicators specifically for Task 1
 export const TASK1_OVERVIEW_MARKERS = [
   'overall', 'in general', 'it is clear that', 'it is evident that',
-  'it can be seen that', 'in summary', 'a noticeable trend is',
-  'most notably', 'broadly speaking', 'as an overall trend'
+  'it can be seen that', 'in summary', 'to summarize', 'to summarise',
+  'in overview', 'overall trend', 'a noticeable trend is',
+  'most notably', 'broadly speaking', 'as an overall trend',
+  'taking an overview'
 ];
 
 // Thesis markers specifically for Task 2

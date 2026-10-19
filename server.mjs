@@ -41,7 +41,12 @@ const server = http.createServer((req, res) => {
     reqPath = '/index.html';
   }
 
-  const filePath = path.join(PUBLIC_DIR, reqPath);
+  const filePath = path.normalize(path.join(PUBLIC_DIR, reqPath));
+  if (!filePath.startsWith(PUBLIC_DIR)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('403 Forbidden');
+    return;
+  }
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 

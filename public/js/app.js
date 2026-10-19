@@ -186,21 +186,29 @@ class IELTSApp {
 
   setMode(mode) {
     if (this.currentMode === mode) return;
-    this.currentMode = mode;
-
+    
+    // Bidirectional sync
     if (mode === 'simulator') {
+      const assembled = this.getAssembledCoachText();
+      if (assembled.trim().length > 0) {
+        this.essayInput.value = assembled;
+      }
       this.btnSimulator.classList.add('active');
       this.btnCoach.classList.remove('active');
       this.simulatorContainer.style.display = 'block';
       this.coachContainer.style.display = 'none';
       this.updateWordCount(this.essayInput.value);
     } else {
+      if (this.essayInput.value.trim().length > 0) {
+        this.distributeDraftToCoach(this.essayInput.value);
+      }
       this.btnCoach.classList.add('active');
       this.btnSimulator.classList.remove('active');
       this.simulatorContainer.style.display = 'none';
       this.coachContainer.style.display = 'flex';
       this.switchCoachSection(this.coachSection);
     }
+    this.currentMode = mode;
   }
 
   loadPrompts() {
@@ -328,10 +336,10 @@ class IELTSApp {
 
   debounceAutosave(text) {
     if (this._saveTimer) clearTimeout(this._saveTimer);
+    const targetPromptId = this.currentPrompt?.id;
+    if (!targetPromptId) return;
     this._saveTimer = setTimeout(() => {
-      if (this.currentPrompt) {
-        storageService.saveDraft(this.currentPrompt.id, text);
-      }
+      storageService.saveDraft(targetPromptId, text);
     }, 500);
   }
 
@@ -474,25 +482,51 @@ class IELTSApp {
       this.historyList.innerHTML = '<div class="text-sm text-muted" style="padding: 20px 0; text-align: center;">No completed essays yet. Write and submit your first essay!</div>';
     } else {
       this.historyList.innerHTML = list.map(item => `
-        <div class="feedback-box" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" data-id="${item.id}">
-          <div>
+        <div class="feedback-box" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;" data-id="${item.id}">
+          <div style="flex: 1; cursor: pointer;" class="history-item-info">
             <div style="font-weight: 600; font-size: 0.85rem;">${item.promptTitle || 'IELTS Practice'}</div>
             <div class="text-xs text-muted">${new Date(item.createdAt).toLocaleDateString()} · ${item.wordCount} words · ${item.taskType ? item.taskType.toUpperCase() : 'TASK 2'}</div>
           </div>
-          <div style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: var(--font-mono);">
-            Band ${item.scores.overall.toFixed(1)}
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: var(--font-mono); cursor: pointer;" class="history-item-band">
+              Band ${item.scores.overall.toFixed(1)}
+            </div>
+            <button class="secondary-btn btn-load-history" style="padding: 4px 10px; font-size: 0.75rem;" title="Load into editor">
+              Load
+            </button>
           </div>
         </div>`).join('');
 
-      // Add click listeners to replay score modal
+      // Add click listeners
       this.historyList.querySelectorAll('.feedback-box').forEach(card => {
-        card.addEventListener('click', () => {
-          const found = list.find(l => l.id === card.dataset.id);
-          if (found) {
+        const found = list.find(l => l.id === card.dataset.id);
+        if (!found) return;
+
+        const infoArea = card.querySelector('.history-item-info');
+        const bandPill = card.querySelector('.history-item-band');
+        const showScore = () => {
+          this.closeHistoryModal();
+          this.displayScoreModal(found);
+        };
+        if (infoArea) infoArea.addEventListener('click', showScore);
+        if (bandPill) bandPill.addEventListener('click', showScore);
+
+        const loadBtn = card.querySelector('.btn-load-history');
+        if (loadBtn) {
+          loadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (found.taskType && found.taskType !== this.currentTask) {
+              this.setTask(found.taskType);
+            }
+            if (found.promptId) {
+              this.selectPromptById(found.promptId);
+            }
+            this.essayInput.value = found.essayText || '';
+            this.distributeDraftToCoach(found.essayText || '');
+            this.updateWordCount(found.essayText || '');
             this.closeHistoryModal();
-            this.displayScoreModal(found);
-          }
-        });
+          });
+        }
       });
     }
 

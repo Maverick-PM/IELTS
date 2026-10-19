@@ -14,6 +14,55 @@ const UPGRADE_DICTIONARY = {
   'a lot of': ['a substantial proportion of', 'numerous', 'a multitude of']
 };
 
+function matchAcademicStem(word) {
+  if (ACADEMIC_WORD_LIST.has(word)) return word;
+  
+  // Common suffixes to strip or substitute
+  const candidates = [];
+  
+  // Plurals and simple endings
+  if (word.endsWith('ies') && word.length > 5) candidates.push(word.slice(0, -3) + 'y');
+  if (word.endsWith('ied') && word.length > 5) candidates.push(word.slice(0, -3) + 'y');
+  if (word.endsWith('es') && word.length > 4) candidates.push(word.slice(0, -2));
+  if (word.endsWith('s') && !word.endsWith('ss') && word.length > 3) candidates.push(word.slice(0, -1));
+  
+  // Participles and past tense
+  if (word.endsWith('ing') && word.length > 5) {
+    candidates.push(word.slice(0, -3));
+    candidates.push(word.slice(0, -3) + 'e');
+  }
+  if (word.endsWith('ed') && word.length > 4) {
+    candidates.push(word.slice(0, -2));
+    candidates.push(word.slice(0, -1)); // e.g. allocated -> allocate
+  }
+
+  // Adverbial & adjectival derivations
+  if (word.endsWith('ly') && word.length > 4) candidates.push(word.slice(0, -2));
+  if (word.endsWith('ical') && word.length > 6) {
+    candidates.push(word.slice(0, -4) + 'y'); // technological -> technology
+    candidates.push(word.slice(0, -4));
+  }
+  if (word.endsWith('ic') && word.length > 4) {
+    candidates.push(word.slice(0, -2) + 'y'); // economic -> economy
+    candidates.push(word.slice(0, -2));
+  }
+
+  // Nominalizations
+  if (word.endsWith('tion') || word.endsWith('sion')) {
+    candidates.push(word.slice(0, -4) + 'te');
+    candidates.push(word.slice(0, -4) + 't');
+    candidates.push(word.slice(0, -4) + 'de');
+    candidates.push(word.slice(0, -3));
+  }
+  if (word.endsWith('ment') && word.length > 6) candidates.push(word.slice(0, -4));
+  if (word.endsWith('ity') && word.length > 5) candidates.push(word.slice(0, -3) + 'e');
+
+  for (const cand of candidates) {
+    if (ACADEMIC_WORD_LIST.has(cand)) return cand;
+  }
+  return null;
+}
+
 export function evaluateLexicalResource(tokenized) {
   const { words, wordCount, text } = tokenized;
   const lowerText = text.toLowerCase();
@@ -23,30 +72,18 @@ export function evaluateLexicalResource(tokenized) {
   const suggestedUpgrades = [];
   let score = 7.0;
 
-  if (wordCount < 50) {
-    return {
-      score: Math.min(3.5, Math.max(1.0, Number((wordCount / 15).toFixed(1)))),
-      strengths: [],
-      areasToImprove: ['Insufficient vocabulary sample for academic evaluation.'],
-      awlWords: [],
-      awlCount: 0,
-      awlDensity: 0,
-      ttr: 0,
-      suggestedUpgrades: []
-    };
-  }
-
   // 1. Unique words and Type-Token Ratio
   const uniqueWords = new Set(words);
-  const ttr = uniqueWords.size / wordCount;
+  const ttr = wordCount > 0 ? uniqueWords.size / wordCount : 0;
 
   // 2. AWL & C1/C2 Analysis
   const foundAwl = new Set();
   const foundAdvanced = new Set();
 
   for (const word of words) {
-    if (ACADEMIC_WORD_LIST.has(word)) {
-      foundAwl.add(word);
+    const matchedStem = matchAcademicStem(word);
+    if (matchedStem) {
+      foundAwl.add(matchedStem);
     }
     if (ADVANCED_DESCRIPTORS.has(word)) {
       foundAdvanced.add(word);
@@ -54,7 +91,20 @@ export function evaluateLexicalResource(tokenized) {
   }
 
   const awlCount = foundAwl.size;
-  const awlDensity = Number(((awlCount / wordCount) * 100).toFixed(1));
+  const awlDensity = wordCount > 0 ? Number(((awlCount / wordCount) * 100).toFixed(1)) : 0;
+
+  if (wordCount < 50) {
+    return {
+      score: Math.min(3.5, Math.max(1.0, Number((wordCount / 15).toFixed(1)))),
+      strengths: [],
+      areasToImprove: ['Insufficient vocabulary sample for academic evaluation.'],
+      awlWords: Array.from(foundAwl),
+      awlCount,
+      awlDensity,
+      ttr: Number(ttr.toFixed(2)),
+      suggestedUpgrades: []
+    };
+  }
 
   // Band Score Calculations
   if (awlCount >= 18 || (awlCount >= 12 && foundAdvanced.size >= 2)) {
