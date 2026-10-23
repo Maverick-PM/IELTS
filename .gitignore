@@ -25,3 +25,5 @@ Thumbs.db
 # Logs & temporary files
 *.log
 *.tmp
+
+.firebase/
