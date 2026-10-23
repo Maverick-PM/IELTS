@@ -25,6 +25,8 @@ Thumbs.db
 # Logs & temporary files
 *.log
 *.tmp
+add_header_history.*
+patch_app.*
 
 .firebase/
 deploy_out.txt

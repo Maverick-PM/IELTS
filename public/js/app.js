@@ -672,6 +672,10 @@ class IELTSApp {
     this.modalDoneBtn.addEventListener('click', () => this.closeScoreModal());
 
     this.btnHistoryToggle.addEventListener('click', () => this.openHistoryModal());
+    const headerHist = document.getElementById('btn-header-history');
+    if (headerHist) {
+      headerHist.addEventListener('click', () => this.openHistoryModal());
+    }
 
     this.historyCloseBtn.addEventListener('click', () => this.closeHistoryModal());
 
@@ -1066,28 +1070,25 @@ class IELTSApp {
 
 
     const savedDraft = await storageService.getDraft(prompt.id);
-
+    const badge = document.getElementById('autosave-text');
     if (savedDraft) {
-
       this.essayInput.value = savedDraft;
-
       this.distributeDraftToCoach(savedDraft);
-
       this.updateWordCount(savedDraft);
-
+      if (badge) {
+        badge.textContent = 'Draft restored from device storage';
+        badge.style.color = 'var(--primary)';
+      }
     } else {
-
       this.essayInput.value = '';
-
       this.clearCoachSections();
-
       this.updateWordCount('');
-
+      if (badge) {
+        badge.textContent = 'Autosaved locally';
+        badge.style.color = 'var(--muted-foreground)';
+      }
     }
-
   }
-
-
 
   navigatePrompt(delta) {
 
@@ -1346,22 +1347,25 @@ class IELTSApp {
 
 
   debounceAutosave(text) {
-
     if (this._saveTimer) clearTimeout(this._saveTimer);
-
     const targetPromptId = this.currentPrompt?.id;
-
     if (!targetPromptId) return;
 
-    this._saveTimer = setTimeout(() => {
+    const badge = document.getElementById('autosave-text');
+    if (badge) {
+      badge.textContent = 'Saving draft...';
+      badge.style.color = 'var(--warning, #eab308)';
+    }
 
-      storageService.saveDraft(targetPromptId, text);
-
+    this._saveTimer = setTimeout(async () => {
+      await storageService.saveDraft(targetPromptId, text);
+      if (badge) {
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        badge.textContent = `Draft saved locally at ${timeStr}`;
+        badge.style.color = 'var(--success, #22c55e)';
+      }
     }, 500);
-
   }
-
-
 
   toggleTimer() {
 
@@ -1932,107 +1936,64 @@ class IELTSApp {
 
 
   displayObjectiveScoreModal(testType, results) {
-
     this.objectiveModalBadge.textContent = testType;
-
     this.objectiveModalTypeLabel.textContent = `Official ${testType} Band`;
+    this.objectiveModalBand.textContent = (results.band || 0).toFixed(1);
 
-    this.objectiveModalBand.textContent = results.band.toFixed(1);
+    const raw = results.rawScore || 0;
+    const total = results.totalQuestions || 40;
+    const pct = Math.round((raw / total) * 100);
+    this.objectiveModalRaw.textContent = `Raw Score: ${raw} / ${total} (${pct}%)`;
 
-    const pct = Math.round((results.rawScore / results.totalQuestions) * 100);
-
-    this.objectiveModalRaw.textContent = `Raw Score: ${results.rawScore} / ${results.totalQuestions} (${pct}%)`;
-
-
-
-    this.objectiveModalResultsList.innerHTML = results.questionResults.map(r => `
-
+    const qList = results.questionResults || [];
+    this.objectiveModalResultsList.innerHTML = qList.map(r => {
+      const qNum = r.number || r.questionNumber || '';
+      const promptText = (r.prompt || `Question ${qNum}`).slice(0, 48);
+      return `
       <div class="feedback-box" style="border-left: 3px solid ${r.isCorrect ? 'var(--success)' : 'var(--destructive)'};">
-
         <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem;">
-
-          <span>Q${r.number}. ${r.prompt.slice(0, 48)}...</span>
-
+          <span>Q${qNum}. ${promptText}...</span>
           <span style="color: ${r.isCorrect ? 'var(--success)' : 'var(--destructive)'};">
-
             ${r.isCorrect ? 'Correct (+1)' : 'Incorrect (0)'}
-
           </span>
-
         </div>
-
         <div class="text-xs" style="margin-top: 4px; color: var(--muted-foreground);">
-
           <span>Your answer: <strong>${r.userAnswer || '(Blank)'}</strong></span> · 
-
           <span>Correct answer: <strong style="color: var(--primary);">${r.correctAnswer}</strong></span>
-
         </div>
-
         <div class="text-xs" style="margin-top: 4px; color: var(--foreground); font-style: italic;">
-
-          ${r.explanation}
-
+          ${r.explanation || ''}
         </div>
-
       </div>
-
-    `).join('');
-
-
+    `;
+    }).join('');
 
     if (this.postTestTranscriptContainer && this.postTestTranscriptText) {
-
       const isListening = (testType || '').toLowerCase().includes('listening');
-      if (isListening) {
-
+      if (isListening && this.currentListeningTest && this.currentListeningTest.sections) {
         this.postTestTranscriptContainer.style.display = 'block';
-
         this.postTestTranscriptText.style.display = 'none';
-
         if (this.togglePostTestTranscriptBtn) {
-
           this.togglePostTestTranscriptBtn.textContent = 'Show Script';
-
         }
-
         const allSections = this.currentListeningTest.sections;
-
         this.postTestTranscriptText.innerHTML = allSections.map(sec => `
-
           <div style="margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
-
             <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">${sec.title}</div>
-
             ${sec.dialogue.map(d => `
-
               <div style="margin-bottom: 4px;">
-
                 <strong style="color: var(--foreground);">${d.speaker}:</strong> <span>${d.text}</span>
-
               </div>
-
             `).join('')}
-
           </div>
-
         `).join('');
-
       } else {
-
         this.postTestTranscriptContainer.style.display = 'none';
-
       }
-
     }
 
-
-
     this.objectiveScoreModal.style.display = 'flex';
-
   }
-
-
 
   /* ------------------------------------------------------------- */
 
@@ -2793,69 +2754,73 @@ class IELTSApp {
   /* ------------------------------------------------------------- */
 
   async openHistoryModal() {
-
     const list = await storageService.getHistory();
-
     if (list.length === 0) {
-
       this.historyList.innerHTML = '<div class="text-sm text-muted" style="padding: 20px 0; text-align: center;">No practice submissions yet. Complete a test in any section!</div>';
-
     } else {
-
       this.historyList.innerHTML = list.map(item => {
-
         const mod = item.module || (item.taskType ? 'writing' : 'practice');
-
         const badgeColor = mod === 'writing' ? 'var(--primary)' : (mod === 'reading' ? 'var(--success)' : (mod === 'listening' ? 'var(--warning)' : '#a855f7'));
-
         const title = item.promptTitle || item.title || 'IELTS Session';
-
         const sub = item.wordCount ? `${item.wordCount} words` : (item.rawScore ? `${item.rawScore}/${item.totalQuestions} items` : 'Self Assessment');
-
-
+        const itemId = item.id || item.createdAt;
 
         return `
-
-          <div class="feedback-box" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-
+          <div class="feedback-box" onclick="window.ieltsApp.openHistoryDetail('${itemId}')" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
             <div style="flex: 1;">
-
-              <div style="font-weight: 600; font-size: 0.85rem;">${title}</div>
-
+              <div style="font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                <span>${title}</span>
+                <span style="font-size: 0.72rem; color: var(--primary); font-weight: normal;">🔍 Click for full breakdown & answers →</span>
+              </div>
               <div class="text-xs text-muted">${new Date(item.createdAt).toLocaleDateString()} · ${sub} · <span style="text-transform: uppercase; color: ${badgeColor}; font-weight: 600;">${mod}</span></div>
-
             </div>
-
-            <div style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: var(--font-mono);">
-
-              Band ${item.scores.overall.toFixed(1)}
-
+            <div style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: var(--font-mono); white-space: nowrap;">
+              Band ${item.scores && item.scores.overall ? item.scores.overall.toFixed(1) : '-'}
             </div>
-
           </div>
-
         `;
-
       }).join('');
-
     }
 
-
-
     this.historyModal.style.display = 'flex';
-
   }
 
+  async openHistoryDetail(id) {
+    const list = await storageService.getHistory();
+    const item = list.find(h => String(h.id) === String(id) || String(h.createdAt) === String(id));
+    if (!item) return;
 
+    this.closeHistoryModal();
+
+    const mod = item.module || (item.taskType ? 'writing' : 'practice');
+    if (mod === 'reading' || mod === 'listening') {
+      const results = {
+        band: item.scores ? (item.scores.overall || item.scores.band || 0) : 0,
+        rawScore: item.rawScore || 0,
+        totalQuestions: item.totalQuestions || (item.questionResults ? item.questionResults.length : 40),
+        questionResults: item.questionResults || []
+      };
+      const title = item.title || item.promptTitle || (mod === 'reading' ? 'IELTS Academic Reading' : 'IELTS Academic Listening');
+      this.displayObjectiveScoreModal(title, results);
+    } else if (mod === 'writing' || item.scores?.ta || item.scores?.tr) {
+      this.displayScoreModal(item);
+    } else if (mod === 'speaking') {
+      alert(`Speaking Practice Breakdown\nTopic: ${item.title}\nOverall Band: ${item.scores?.overall?.toFixed(1) || '-'}\n• Fluency & Coherence: ${item.scores?.fc || '-'}\n• Lexical Resource: ${item.scores?.lr || '-'}\n• Grammatical Range: ${item.scores?.gra || '-'}\n• Pronunciation: ${item.scores?.pr || '-'}`);
+    } else if (item.questionResults) {
+      this.displayObjectiveScoreModal(item.title || 'IELTS Test Session', {
+        band: item.scores ? (item.scores.overall || 0) : 0,
+        rawScore: item.rawScore || 0,
+        totalQuestions: item.totalQuestions || item.questionResults.length,
+        questionResults: item.questionResults
+      });
+    } else if (item.feedback) {
+      this.displayScoreModal(item);
+    }
+  }
 
   closeHistoryModal() {
-
     this.historyModal.style.display = 'none';
-
   }
-
-
-
 
   initCDIeltsModule() {
     this.btnToggleCD = document.getElementById('btn-toggle-cd-ielts');
