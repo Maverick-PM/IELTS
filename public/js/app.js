@@ -1983,7 +1983,8 @@ class IELTSApp {
 
     if (this.postTestTranscriptContainer && this.postTestTranscriptText) {
 
-      if (type === 'listening') {
+      const isListening = (testType || '').toLowerCase().includes('listening');
+      if (isListening) {
 
         this.postTestTranscriptContainer.style.display = 'block';
 

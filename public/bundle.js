@@ -886,17 +886,17 @@ Write at least 250 words.`;this.promptText.textContent=t,this.promptInstructions
 
       </div>
 
-    `).join(""),this.postTestTranscriptContainer&&this.postTestTranscriptText)if(type==="listening"){this.postTestTranscriptContainer.style.display="block",this.postTestTranscriptText.style.display="none",this.togglePostTestTranscriptBtn&&(this.togglePostTestTranscriptBtn.textContent="Show Script");let a=this.currentListeningTest.sections;this.postTestTranscriptText.innerHTML=a.map(n=>`
+    `).join(""),this.postTestTranscriptContainer&&this.postTestTranscriptText)if((e||"").toLowerCase().includes("listening")){this.postTestTranscriptContainer.style.display="block",this.postTestTranscriptText.style.display="none",this.togglePostTestTranscriptBtn&&(this.togglePostTestTranscriptBtn.textContent="Show Script");let n=this.currentListeningTest.sections;this.postTestTranscriptText.innerHTML=n.map(r=>`
 
           <div style="margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
 
-            <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">${n.title}</div>
+            <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">${r.title}</div>
 
-            ${n.dialogue.map(r=>`
+            ${r.dialogue.map(l=>`
 
               <div style="margin-bottom: 4px;">
 
-                <strong style="color: var(--foreground);">${r.speaker}:</strong> <span>${r.text}</span>
+                <strong style="color: var(--foreground);">${l.speaker}:</strong> <span>${l.text}</span>
 
               </div>
 
