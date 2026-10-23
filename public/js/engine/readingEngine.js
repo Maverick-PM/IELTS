@@ -55,7 +55,7 @@ export function evaluateReadingTest(test, userAnswers = {}) {
   }
 
   // Calculate official Band score
-  const band = rawToReadingBand(rawScore);
+  const band = rawToReadingBand(rawScore, totalQuestions);
 
   // Generate diagnostic summary
   const strengths = [];

@@ -123,5 +123,125 @@ export const TASK_2_PROMPTS = [
     question: 'Tourism has become one of the fastest-growing global industries, bringing millions of international travelers to historical cities and natural reserves.\n\nDo the advantages of mass tourism surpass the negative impacts on host communities?',
     instructions: OFFICIAL_TASK2_INSTRUCTIONS,
     sampleKeywords: ['foreign revenue', 'cultural exchange', 'overtourism', 'environmental degradation', 'gentrification']
+  },
+  {
+    id: 'task2-16',
+    category: 'opinion',
+    title: 'Social Media Influence on Public Discourse',
+    question: 'Social media platforms have done more to divide communities and spread misinformation than to bring people together.\n\nTo what extent do you agree or disagree?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['echo chambers', 'polarization', 'algorithmic curation', 'misinformation', 'civic cohesion']
+  },
+  {
+    id: 'task2-17',
+    category: 'discussion',
+    title: 'Artificial Intelligence in Creative Arts & Literature',
+    question: 'Some believe that AI systems creating music, paintings, and literature diminish human artistic expression. Others argue that AI is merely an innovative tool that broadens human creative potential.\n\nDiscuss both views and give your own opinion.',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['generative algorithms', 'human emotional depth', 'artistic authenticity', 'creative augmentation']
+  },
+  {
+    id: 'task2-18',
+    category: 'problem-solution',
+    title: 'Fast Fashion & Textile Waste',
+    question: 'The exponential rise of inexpensive fast fashion has resulted in colossal textile waste and industrial water pollution globally.\n\nWhat factors cause this phenomenon, and what effective measures can consumers and clothing brands undertake?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['disposable consumerism', 'synthetic microfibers', 'circular fashion', 'extended producer accountability']
+  },
+  {
+    id: 'task2-19',
+    category: 'advantages-disadvantages',
+    title: 'Genetically Modified Organisms in Global Agriculture',
+    question: 'Biotechnologists are developing genetically modified (GM) crops engineered for drought resistance and higher yields to feed expanding global populations.\n\nDo the advantages of cultivating GM crops outweigh the potential ecological and health hazards?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['food security', 'crop yield', 'biodiversity reduction', 'ecological disruption', 'monopolistic control']
+  },
+  {
+    id: 'task2-20',
+    category: 'opinion',
+    title: 'Corporate vs Individual Environmental Responsibility',
+    question: 'Multinational corporations are primarily responsible for global climate emissions; therefore, governmental regulations should target corporations rather than penalize ordinary individuals with personal carbon limits.\n\nTo what extent do you agree or disagree?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['industrial culpability', 'consumer demand', 'carbon taxation', 'systemic decarbonization', 'civic duty']
+  },
+  {
+    id: 'task2-21',
+    category: 'discussion',
+    title: 'Standardized Examinations vs Continuous Coursework',
+    question: 'Some educators argue that high-stakes standardized final exams are the fairest metric for student achievement. Others contend that continuous project-based coursework provides a far more accurate reflection of intellectual ability.\n\nDiscuss both views and give your opinion.',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['academic pedagogy', 'examination stress', 'holistic assessment', 'rote memorization', 'continuous evaluation']
+  },
+  {
+    id: 'task2-22',
+    category: 'problem-solution',
+    title: 'Sedentary Lifestyles & Physical Inactivity in Modern Cities',
+    question: 'A growing percentage of urban adults and children lead excessively sedentary lives, leading to a worldwide surge in cardiovascular disease and diabetes.\n\nExamine the root causes of this crisis and suggest comprehensive solutions for local governments and urban planners.',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['desk-bound routines', 'active transit', 'urban green spaces', 'preventative medicine', 'habit formation']
+  },
+  {
+    id: 'task2-23',
+    category: 'advantages-disadvantages',
+    title: 'Autonomous Self-Driving Vehicles in Public Transport',
+    question: 'Several major cities are piloting fully autonomous self-driving buses and taxis to replace human-operated transport fleets.\n\nDo the advantages of autonomous public transport outweigh the potential safety and socioeconomic risks?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['vehicular autonomy', 'algorithmic navigation', 'traffic flow efficiency', 'driver displacement', 'safety liability']
+  },
+  {
+    id: 'task2-24',
+    category: 'opinion',
+    title: 'Preservation of Endangered Indigenous Languages',
+    question: 'Governments should invest substantial financial resources into documenting and revitalizing endangered indigenous languages before they become extinct.\n\nTo what extent do you agree or disagree?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['linguistic diversity', 'cultural repository', 'endangered dialects', 'indigenous worldview', 'fiscal allocation']
+  },
+  {
+    id: 'task2-25',
+    category: 'discussion',
+    title: 'Funding for Elite Olympic Athletics vs Community Sports',
+    question: 'Some believe governments should direct sports funding toward training elite athletes to win medals at international competitions. Others argue funding should be reserved for public grassroots sports facilities accessible to all citizens.\n\nDiscuss both views and give your opinion.',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['national prestige', 'grassroots participation', 'public health infrastructure', 'athletic excellence', 'recreational equity']
+  },
+  {
+    id: 'task2-26',
+    category: 'opinion',
+    title: 'Ecotourism in Pristine Fragile Ecosystems',
+    question: 'Ecotourism to fragile natural habitats—such as Antarctica and the Amazon rainforest—inevitably harms the very ecosystems it claims to preserve, and should therefore be completely banned.\n\nTo what extent do you agree or disagree?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['ecotourism', 'fragile biosphere', 'carbon footprint', 'conservation funding', 'anthropogenic disruption']
+  },
+  {
+    id: 'task2-27',
+    category: 'discussion',
+    title: 'Government Surveillance vs Civil Digital Privacy',
+    question: 'Some believe governments should have unrestricted authority to monitor electronic communications to prevent criminal and terrorist activity. Others argue that digital privacy is a fundamental civil liberty that state agencies must never infringe upon.\n\nDiscuss both views and give your opinion.',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['mass surveillance', 'civil liberties', 'national security', 'digital encryption', 'draconian oversight']
+  },
+  {
+    id: 'task2-28',
+    category: 'problem-solution',
+    title: 'Metropolitan Urban Sprawl & Food Security',
+    question: 'Unchecked horizontal urban sprawl is consuming thousands of hectares of prime agricultural land around major global metropolises each year, threatening national food security.\n\nAnalyze the root causes of this phenomenon and recommend forward-thinking urban planning interventions.',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['horizontal urban sprawl', 'agricultural encroachment', 'vertical densification', 'green belts', 'sustainable zoning']
+  },
+  {
+    id: 'task2-29',
+    category: 'advantages-disadvantages',
+    title: 'Unified National Electronic Medical Records',
+    question: 'Healthcare authorities in several nations are consolidating all citizen medical histories into centralized digital databases accessible by all clinics and emergency responders.\n\nDo the clinical advantages of centralized electronic health records outweigh potential data breach vulnerabilities?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['centralized biometric records', 'clinical efficacy', 'interoperability', 'data security breaches', 'patient autonomy']
+  },
+  {
+    id: 'task2-30',
+    category: 'opinion',
+    title: 'Mandatory Civic Community Service for Secondary Graduates',
+    question: 'All young adults finishing secondary school should be required to complete one year of unpaid community service or public infrastructure work before entering university or the workforce.\n\nTo what extent do you agree or disagree?',
+    instructions: OFFICIAL_TASK2_INSTRUCTIONS,
+    sampleKeywords: ['civic duty', 'social solidarity', 'coercive labor', 'character building', 'delayed career entry']
   }
 ];

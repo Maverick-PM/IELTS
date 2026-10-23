@@ -1,0 +1,14 @@
+{
+  "hosting": [
+    {
+      "site": "ielts-fffc8",
+      "public": "public",
+      "cleanUrls": true
+    },
+    {
+      "site": "ieltsmd",
+      "public": "public",
+      "cleanUrls": true
+    }
+  ]
+}

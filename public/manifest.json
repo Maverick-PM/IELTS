@@ -1,30 +1,25 @@
 {
-  "name": "IELTS Academic Offline Practice",
-  "short_name": "IELTS Offline",
-  "description": "100% Offline IELTS Academic Task 1 and Task 2 Practice & Band Review Engine",
-  "start_url": "./index.html",
+  "name": "IELTS Academic Master",
+  "short_name": "IELTS Prep",
+  "description": "Complete 4-in-1 Offline IELTS Academic Practice Suite",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#090d16",
-  "theme_color": "#090d16",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "icons/icon-192.png",
-      "type": "image/png",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any"
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

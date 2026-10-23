@@ -1,5 +1,27 @@
+# Dependencies
 node_modules/
-dist/
-.superpowers/
+package-lock.json
+
+# Environment & Private Firebase configs
+.env
+.env.*
+.firebaserc
+firebase-debug.log*
+
+# Python temporary caches & generator scripts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py
+
+# System & Editor configs
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.superpowers/
+
+# Logs & temporary files
 *.log
+*.tmp
